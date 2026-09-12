@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "onelegdave.phone-mirror",
+  "name": "OmaDroid",
+  "version": "0.3.1",
+  "author": "OneLegDave",
+  "license": "MIT",
+  "description": "Your Android on Omarchy. Guided setup, desktop tool installation, and polished phone mirroring over Wi-Fi or USB.",
+  "kinds": ["bar-widget"],
+  "entryPoints": {"barWidget": "Panel.qml"},
+  "barWidget": {
+    "displayName": "OmaDroid",
+    "category": "Connectivity",
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": {"quality": "Balanced", "audio": true, "screenOff": false, "autoReconnect": true, "keepAwake": true},
+    "schema": [
+      {"key": "quality", "type": "enum", "label": "Mirror quality", "options": ["Balanced", "Sharp", "Low bandwidth"], "defaultValue": "Balanced"},
+      {"key": "audio", "type": "boolean", "label": "Play phone audio on computer", "defaultValue": true},
+      {"key": "screenOff", "type": "boolean", "label": "Turn phone screen off while mirroring", "defaultValue": false},
+      {"key": "autoReconnect", "type": "boolean", "label": "Reconnect remembered phones automatically", "defaultValue": true},
+      {"key": "keepAwake", "type": "boolean", "label": "Keep phone awake while mirroring", "defaultValue": true}
+    ]
+  }
+}
