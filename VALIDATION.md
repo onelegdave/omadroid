@@ -1,4 +1,9 @@
-# Validation — 0.3.2
+# Validation — 0.3.3
+
+Additional verification for 0.3.3 on 2026-09-12:
+
+- All 89 Python tests pass, including migration of bar position/options, preserving disabled preferences, repeat installation, refusal of conflicting IDs, and rejection of a symlinked legacy install. QML lint and Omarchy plugin validation pass.
+- The manifest ID, QML module/IPC target, and current user commands use `onelegdave.omadroid`. The installer backs up and disables the legacy copy. The backend's existing private storage paths stay compatible so saved phones and mirror sessions remain available.
 
 Additional verification for 0.3.2 on 2026-09-12:
 

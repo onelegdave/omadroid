@@ -8,7 +8,7 @@ No root, paid service, Samsung account, or additional Android mirroring app is r
 
 ![OmaDroid mirroring an Android display beside its live phone controls](preview.png)
 
-[More screenshots](docs/screenshots.md) · [Release v0.3.2](https://github.com/onelegdave/omadroid/releases/tag/v0.3.2) · [Security and privacy](SECURITY.md)
+[More screenshots](docs/screenshots.md) · [Release v0.3.3](https://github.com/onelegdave/omadroid/releases/tag/v0.3.3) · [Security and privacy](SECURITY.md)
 
 ## Install
 
@@ -20,7 +20,7 @@ omarchy plugin add https://github.com/onelegdave/omadroid --enable
 
 Open the phone icon in the bar and follow **Connect → Desktop → Phone → Pair → Ready**. OmaDroid offers explicit Install buttons for missing desktop tools. Android debugging authorization is required; KDE Connect alone cannot mirror the phone.
 
-The command installs the current upstream branch. For the numbered release, download and extract `omadroid-v0.3.2.tar.gz` from [Releases](https://github.com/onelegdave/omadroid/releases/tag/v0.3.2), review its source, and use the local installer below. Checksums are included with the release.
+The command installs the current upstream branch. For the numbered release, download and extract `omadroid-v0.3.3.tar.gz` from [Releases](https://github.com/onelegdave/omadroid/releases/tag/v0.3.3), review its source, and use the local installer below. Checksums are included with the release.
 
 ## Requirements
 
@@ -39,9 +39,13 @@ omarchy restart shell
 
 Open the phone icon in the bar, then **Connect → Desktop**. Choose **Install required tools** if prompted. The app opens a terminal that shows the packages and requests your desktop password if needed. Return to OmaDroid when it finishes; status refreshes automatically. **Help → Desktop tools** also offers optional KDE Connect, wireless discovery, and USB access rules. Discovery installation enables the Avahi service. No package is installed just by opening the panel.
 
-The installer validates file ownership/types and the manifest ID, backs up shell.json and any previous installation, installs the fixed file list into `~/.config/omarchy/plugins/onelegdave.phone-mirror`, and adds the bar entry if needed. Existing settings and bar placement are preserved. It respects XDG_CONFIG_HOME and does not edit packaged Omarchy files. It launches no commands and downloads nothing; run the shell restart separately to load the update. Installation runs as your desktop user. Backups are under `~/.config/omarchy/plugin-backups` and `shell.json.bak-omadroid-*`.
+The installer validates file ownership/types and the manifest ID, backs up shell.json and any previous installation, installs the fixed file list into `~/.config/omarchy/plugins/onelegdave.omadroid`, and adds the bar entry if needed. Existing settings and bar placement are preserved. It respects XDG_CONFIG_HOME and does not edit packaged Omarchy files. It launches no commands and downloads nothing; run the shell restart separately to load the update. Installation runs as your desktop user. Backups are under `~/.config/omarchy/plugin-backups` and `shell.json.bak-omadroid-*`.
 
-If an upgrade still displays the previous interface after installation, run `omarchy restart shell`. Some shell versions retain cached QML components through a plugin rescan. Existing mirror sessions remain open. The internal plugin ID remains `onelegdave.phone-mirror`, so upgrades preserve your settings and bar placement.
+If an upgrade still displays the previous interface after installation, run `omarchy restart shell`. Some shell versions retain cached QML components through a plugin rescan. Existing mirror sessions remain open. The plugin ID and command target are `onelegdave.omadroid`.
+
+### Upgrade from the former plugin ID
+
+For versions through 0.3.2, use the local installer from the new release once. It migrates the former plugin ID to `onelegdave.omadroid` while preserving bar placement and options, backs up the old installation and shell configuration, and disables the old copy. Restart the shell after installation. Saved phone connections and pairing remain available. If both IDs are already configured, the installer refuses to guess which settings to keep.
 
 ## Connect your phone
 
@@ -96,15 +100,15 @@ The panel shows pairing/connection failures and USB authorization states. Later 
 ADB authorization gives this computer debugging access to your phone; revoke it in Developer options when you no longer trust the computer. Disabling this plugin does not revoke ADB or KDE Connect pairing.
 
 ```bash
-omarchy-shell onelegdave.phone-mirror open
-omarchy-shell onelegdave.phone-mirror setup
-omarchy-shell onelegdave.phone-mirror help
-omarchy-shell onelegdave.phone-mirror settings
-omarchy-shell onelegdave.phone-mirror status
-omarchy plugin disable onelegdave.phone-mirror
+omarchy-shell onelegdave.omadroid open
+omarchy-shell onelegdave.omadroid setup
+omarchy-shell onelegdave.omadroid help
+omarchy-shell onelegdave.omadroid settings
+omarchy-shell onelegdave.omadroid status
+omarchy plugin disable onelegdave.omadroid
 ```
 
-To remove: disable the plugin, close any mirror windows, then use `omarchy plugin remove onelegdave.phone-mirror`. Local logs and recent addresses can be removed separately. To revoke wireless authorization, forget this computer in the phone's Wireless debugging settings.
+To remove: disable the plugin, close any mirror windows, then use `omarchy plugin remove onelegdave.omadroid`. Local logs and recent addresses can be removed separately. To revoke wireless authorization, forget this computer in the phone's Wireless debugging settings.
 
 ## Development
 

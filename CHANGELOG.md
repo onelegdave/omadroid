@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.3 — 2026-09-12
+
+- Rename the plugin ID and shell command target to `onelegdave.omadroid`.
+- Migrate existing bar placement, options, and enabled/disabled preferences with the local installer; back up and disable the old copy.
+- Preserve saved phone connections and pairing. Refuse ambiguous configurations containing both plugin IDs.
+
 ## 0.3.2 — 2026-09-12
 
 First public GitHub Release. Includes the final marketplace screenshot with the local phone address redacted, complete screenshot gallery, and installation documentation. Runtime behavior is unchanged from 0.3.1; version labels are synchronized.
@@ -17,4 +23,4 @@ Initial published source snapshot.
 - Hardened file access, verified helper executables, clean child environments, bounded output and session logs, and private-address phone connection policy.
 - No telemetry or background website requests. The OneLegDave Help credit opens the author's website only when clicked.
 
-The internal ID remains `onelegdave.phone-mirror` to preserve development users' settings and bar placement.
+Versions through 0.3.2 used the original development plugin ID; 0.3.3 includes its settings migration.

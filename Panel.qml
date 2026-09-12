@@ -9,7 +9,7 @@ import qs.Commons
 
 Panel {
     id: root
-    moduleName: "onelegdave.phone-mirror"
+    moduleName: "onelegdave.omadroid"
     ipcTarget: moduleName
     manageIpc: false
     implicitWidth: barButton.implicitWidth
@@ -277,7 +277,7 @@ Panel {
         }
         function status(): string {
             return JSON.stringify({
-                version: "0.3.2",
+                version: "0.3.3",
                 name: "OmaDroid",
                 theme: {
                     background: root.colors.background.toString(),
@@ -1222,7 +1222,7 @@ Panel {
                             width: parent.width
                             Label {
                                 width: parent.width
-                                text: "OmaDroid · 0.3.2"
+                                text: "OmaDroid · 0.3.3"
                                 font.bold: true
                             }
                             Label {
