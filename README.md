@@ -8,7 +8,7 @@ No root, paid service, Samsung account, or additional Android mirroring app is r
 
 ![OmaDroid mirroring an Android display beside its live phone controls](preview.png)
 
-[More screenshots](docs/screenshots.md) · [Release v0.3.1](https://github.com/onelegdave/omadroid/releases/tag/v0.3.1) · [Security and privacy](SECURITY.md)
+[More screenshots](docs/screenshots.md) · [Release v0.3.2](https://github.com/onelegdave/omadroid/releases/tag/v0.3.2) · [Security and privacy](SECURITY.md)
 
 ## Install
 
@@ -20,7 +20,7 @@ omarchy plugin add https://github.com/onelegdave/omadroid --enable
 
 Open the phone icon in the bar and follow **Connect → Desktop → Phone → Pair → Ready**. OmaDroid offers explicit Install buttons for missing desktop tools. Android debugging authorization is required; KDE Connect alone cannot mirror the phone.
 
-The command installs the current upstream branch. For the numbered release, download and extract `omadroid-v0.3.1.tar.gz` from [Releases](https://github.com/onelegdave/omadroid/releases/tag/v0.3.1), review its source, and use the local installer below. Checksums are included with the release.
+The command installs the current upstream branch. For the numbered release, download and extract `omadroid-v0.3.2.tar.gz` from [Releases](https://github.com/onelegdave/omadroid/releases/tag/v0.3.2), review its source, and use the local installer below. Checksums are included with the release.
 
 ## Requirements
 

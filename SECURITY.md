@@ -1,6 +1,6 @@
 # OmaDroid security and network behavior
 
-Audit target: OmaDroid 0.3.1, 2026-09-12. The 0.3.1 change adds an explicit author website button to the audited 0.3.0 runtime. This describes the source shipped in this folder and the installed distro tools tested on the development desktop.
+Audit target: OmaDroid 0.3.2, 2026-09-12. Version 0.3.2 changes only release metadata and documentation/assets. The 0.3.1 change adds an explicit author website button to the audited 0.3.0 runtime. This describes the source shipped in this folder and the installed distro tools tested on the development desktop.
 
 ## No phone-home functionality
 

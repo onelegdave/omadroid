@@ -1,4 +1,8 @@
-# Validation — 0.3.1
+# Validation — 0.3.2
+
+Additional verification for 0.3.2 on 2026-09-12:
+
+- Included the locally updated marketplace preview with the private phone address redacted. Visually checked the final image. Runtime behavior is unchanged; synchronized version labels and release documentation. QML lint, manifest validation, and four network-policy regression tests pass.
 
 Additional verification for 0.3.1 on 2026-09-12:
 

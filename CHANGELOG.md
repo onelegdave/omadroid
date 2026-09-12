@@ -1,8 +1,12 @@
 # Changelog
 
+## 0.3.2 — 2026-09-12
+
+First public GitHub Release. Includes the final marketplace screenshot with the local phone address redacted, complete screenshot gallery, and installation documentation. Runtime behavior is unchanged from 0.3.1; version labels are synchronized.
+
 ## 0.3.1 — 2026-09-12
 
-First public OmaDroid release.
+Initial published source snapshot.
 
 - Mirror and control Android phones over USB or paired Wi-Fi using scrcpy and ADB.
 - Guided desktop setup, phone preparation, pairing, and connection instructions, with explicit dependency installation buttons.

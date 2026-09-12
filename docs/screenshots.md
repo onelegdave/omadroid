@@ -6,7 +6,7 @@ Real captures of OmaDroid 0.3.1 running in Omarchy Shell with the user's active 
 
 ![A live Android Display settings page beside OmaDroid's mirroring controls](../preview.png)
 
-The root `preview.png` is the marketplace image. It shows the real scrcpy mirror and the matching LIVE phone card, with Stop mirror, Wake / unlock, Disconnect, and optional KDE Connect status visible. Android's Display settings page keeps personal app content out of the capture. The phone status bar was temporarily hidden for the screenshot and its prior display policy was restored immediately afterward. No simulated phone data or generated UI is used.
+The root `preview.png` is the marketplace image. It shows the real scrcpy mirror and the matching LIVE phone card, with Stop mirror, Wake / unlock, Disconnect, and optional KDE Connect status visible. Android's Display settings page keeps personal app content out of the capture. The phone status bar was temporarily hidden for the screenshot and its prior display policy was restored immediately afterward. The local phone address is redacted in the final marketplace image. No simulated phone data or generated UI is used.
 
 ## Guided connection
 
