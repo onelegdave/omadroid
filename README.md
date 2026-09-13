@@ -8,7 +8,7 @@ No root, paid service, Samsung account, or additional Android mirroring app is r
 
 ![OmaDroid mirroring an Android display beside its live phone controls](preview.png)
 
-[More screenshots](docs/screenshots.md) · [Release v0.3.3](https://github.com/onelegdave/omadroid/releases/tag/v0.3.3) · [Security and privacy](SECURITY.md)
+[More screenshots](docs/screenshots.md) · [Release v0.3.4](https://github.com/onelegdave/omadroid/releases/tag/v0.3.4) · [Security and privacy](SECURITY.md)
 
 ## Install
 
@@ -20,7 +20,7 @@ omarchy plugin add https://github.com/onelegdave/omadroid --enable
 
 Open the phone icon in the bar and follow **Connect → Desktop → Phone → Pair → Ready**. OmaDroid offers explicit Install buttons for missing desktop tools. Android debugging authorization is required; KDE Connect alone cannot mirror the phone.
 
-The command installs the current upstream branch. For the numbered release, download and extract `omadroid-v0.3.3.tar.gz` from [Releases](https://github.com/onelegdave/omadroid/releases/tag/v0.3.3), review its source, and use the local installer below. Checksums are included with the release.
+The command installs the current upstream branch. For the numbered release, download and extract `omadroid-v0.3.4.tar.gz` from [Releases](https://github.com/onelegdave/omadroid/releases/tag/v0.3.4), review its source, and use the local installer below. Checksums are included with the release.
 
 ## Requirements
 
@@ -65,6 +65,19 @@ The status card shows whether a mirror is active or a connection is ready, with 
 
 Remembered phones reconnect automatically when discovery advertises the same identity, even if the address or port changed. Android versions advertising a serial number use that stable identity; older advertisements use the service name and may require manual reconnection if it changes. Automatic retries are limited to once per address every 30 seconds and can be disabled in **Settings**. After successful pairing, discovery can complete connection to the same host for up to ten minutes. The plugin never automatically pairs unknown phones or starts a mirror session without clicking Mirror.
 
+### Tailscale and other phone VPNs
+
+Android can show a VPN address in its Wireless debugging dialog. OmaDroid uses the phone's local Wi-Fi address; it does **not** accept Tailscale's shared IPv4 range (`100.64.0.0/10`) or provide remote mirroring over Tailscale.
+
+1. Keep the phone and computer on the same local network. Open **Pair device with pairing code** and choose **Use detected address** in OmaDroid if a Wi-Fi pairing address appears.
+2. If Android only shows a VPN address, temporarily pause the VPN **on the phone**, reopen the pairing dialog, and use its current Wi-Fi address, pairing port, and code. Keep the dialog open until pairing succeeds. Each computer needs its own pairing approval.
+3. After pairing, you can turn the VPN back on. Refresh OmaDroid and choose **Connect** beside the saved phone. A VPN or network change can briefly interrupt Wireless debugging or change its connection port; let it settle, then retry using current discovery or the main Wireless debugging screen's Wi-Fi connection address. Do not reuse the pairing port.
+4. If the VPN routes through an exit node or blocks local traffic, allow local network access in its settings, or pause it while mirroring. See [Tailscale's Android exit-node instructions](https://tailscale.com/docs/features/exit-nodes/how-to/setup?tab=android). OmaDroid never changes VPN settings automatically.
+
+**Disconnect pauses automatic reconnect.** Choose **Connect** to resume; disconnection alone does not erase pairing. **Stop mirror** or closing the mirror window keeps the phone connected. Re-pair only if Android has forgotten or revoked this computer's authorization. See [Android's wireless debugging instructions](https://developer.android.com/tools/adb#connect-to-a-device-over-wi-fi).
+
+A phone shown as nearby is advertising its name and address live on the network. Discovery does not mean it is paired or that its profile came from another computer. Plugin installation does not copy phone profiles or ADB keys.
+
 ### USB, including older Android versions
 
 Enable **USB debugging**, connect a data-capable cable, unlock the phone and allow debugging from the computer. Click Mirror when it appears. If the plugin reports USB permissions are missing, choose **Help → Desktop tools → Install USB rules**, reconnect, and follow your distribution's device access guidance.
@@ -97,7 +110,7 @@ OmaDroid has no telemetry, advertising, cloud relay, automatic update check, or 
 
 The panel shows pairing/connection failures and USB authorization states. Later scrcpy failures generate a desktop notification. Per-session logs are under `~/.cache/phone-mirror`; saved connection addresses and confirmed device/connection identities are under `~/.local/state/phone-mirror` (both respect XDG overrides). New files are private to your user. Pairing codes are passed through standard input, cleared from the panel, and never saved or included in process command lines. Mirroring does not record video to disk.
 
-ADB authorization gives this computer debugging access to your phone; revoke it in Developer options when you no longer trust the computer. Disabling this plugin does not revoke ADB or KDE Connect pairing.
+ADB authorization gives this computer debugging access to your phone; revoke it in Developer options when you no longer trust the computer. Disabling this plugin does not revoke ADB or KDE Connect pairing. ADB starts its standard local daemon when needed; no separate ADB startup service or manual `adb start-server` command is required.
 
 ```bash
 omarchy-shell onelegdave.omadroid open

@@ -40,3 +40,17 @@ class NetworkPolicyTests(unittest.TestCase):
             result=phone.identify_devices([{'serial':'8.8.8.8:1234','state':'device','name':'Phone','wireless':True}],[])
         checked.assert_not_called()
         self.assertEqual(result[0]['state'],'unsupported address')
+
+    def test_shared_range_gets_vpn_guidance_without_running_adb(self):
+        with patch.object(phone,'run') as run, patch.object(phone,'checked') as checked:
+            for address in ('100.64.0.1:33371', '100.89.1.2:33371', '100.127.255.254:33371'):
+                for action in ('pair', 'connect'):
+                    with self.subTest(address=address, action=action), self.assertRaisesRegex(phone.UserError, "Tailscale.*Wi-Fi"):
+                        phone.action({'action': action, 'address': address, 'code': '123456'})
+        run.assert_not_called(); checked.assert_not_called()
+
+    def test_shared_range_guidance_does_not_widen_address_policy(self):
+        for address in ('100.63.255.254:33371', '100.128.0.1:33371'):
+            with self.assertRaisesRegex(phone.UserError, 'private local-network'):
+                phone.endpoint(address)
+        self.assertEqual(phone.endpoint('192.168.1.2:33371'), '192.168.1.2:33371')

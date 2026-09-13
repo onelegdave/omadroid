@@ -47,6 +47,11 @@ def endpoint(value):
         address = ipaddress.ip_address(match[1] or match[2])
     except ValueError:
         raise UserError("Use the numeric IP address shown on your phone.") from None
+    if address in ipaddress.ip_network('100.64.0.0/10'):
+        raise UserError("This shared-range address may belong to Tailscale or another VPN. "
+                        "Use the phone's Wi-Fi address or Use detected address. If Android shows only "
+                        "the VPN address, temporarily pause the phone VPN and reopen the pairing dialog "
+                        "for its current Wi-Fi address, pairing port, and code.")
     allowed = ('10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '169.254.0.0/16', 'fc00::/7', 'fe80::/10')
     if not any(address in ipaddress.ip_network(network) for network in allowed):
         raise UserError('Use a private local-network phone address. Public Internet, loopback, and multicast addresses are not supported.')
@@ -362,9 +367,15 @@ def known_phones(state, cache):
 
 
 def connect_phone(address, services=None):
-    output = checked(["adb", "connect", address], timeout=15)
+    hint = (" Check that Wireless debugging is still on, refresh discovery, and choose Connect again. "
+            "A VPN or network change can briefly interrupt the connection or change its port. "
+            "Use the phone's Wi-Fi connection address, not the pairing port; a disconnect alone does not require pairing again.")
+    try:
+        output = checked(["adb", "connect", address], timeout=15)
+    except UserError as error:
+        raise UserError(str(error) + hint) from None
     if not re.search(r"(?:already )?connected to ", output, re.I):
-        raise UserError(output or "Connection failed. Check Wireless debugging on your phone.")
+        raise UserError((output or "Connection failed.") + hint)
     devices = parse_devices(checked(["adb", "devices", "-l"]))
     device = next((d for d in devices if d["serial"] == address and d["state"] == "device"), None)
     if not device:

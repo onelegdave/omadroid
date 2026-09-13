@@ -26,7 +26,9 @@ def tool_environment():
     runtime = '/run/user/' + str(os.getuid())
     env = {'PATH': '/usr/bin', 'LANG': 'C.UTF-8', 'LC_ALL': 'C.UTF-8', 'HOME': home,
            'XDG_RUNTIME_DIR': runtime, 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=' + runtime + '/bus',
-           'ADB_SERVER_SOCKET': 'tcp:127.0.0.1:5037', 'ADB': '/usr/bin/adb',
+           # ADB recognizes the literal "localhost" spelling as local and can
+           # start its daemon. A numeric loopback host is treated as remote.
+           'ADB_SERVER_SOCKET': 'tcp:localhost:5037', 'ADB': '/usr/bin/adb',
            'SCRCPY_SERVER_PATH': '/usr/share/scrcpy/scrcpy-server'}
     # XDG file locations are validated separately by the nofollow storage layer.
     for name in ('XDG_CONFIG_HOME', 'XDG_STATE_HOME', 'XDG_CACHE_HOME'):

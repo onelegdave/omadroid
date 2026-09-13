@@ -99,6 +99,22 @@ legacy _adb._tcp. 192.168.1.3:5555
                 phone.connect_phone("192.168.1.2:32100")
         self.assertEqual(phone.saved(), [])
 
+    def test_failed_reconnect_preserves_pairing_profile_and_can_resume(self):
+        address = '192.168.1.2:43200'
+        original = {'phones': [dict(identity='KNOWN', name='Phone', address=address, paused=True)]}
+        phone.write_connection_state(original)
+        for failure in ('failed to connect', phone.UserError('Connection refused')):
+            with patch.object(phone, 'checked', side_effect=[failure]) if isinstance(failure, Exception) else patch.object(phone, 'checked', return_value=failure):
+                with self.assertRaisesRegex(phone.UserError, 'choose Connect again'):
+                    phone.action({'action': 'connect', 'address': address})
+            self.assertEqual(phone.connection_state(), original)
+        services = [dict(name='advertised-phone', identity='KNOWN', label='Phone', kind='connect', address=address)]
+        with patch.object(phone, 'checked', side_effect=['connected to ' + address, address + ' device model:Phone']), patch.object(phone, 'discover', return_value=services):
+            self.assertTrue(phone.action({'action': 'connect', 'address': address})['connected'])
+        profiles = phone.connection_state()['phones']
+        self.assertEqual(len(profiles), 1)
+        self.assertFalse(profiles[0].get('paused', False))
+
     def test_pairing_automatically_uses_connection_port_on_same_phone(self):
         services = [{"name": "phone", "kind": "connect", "address": "192.168.1.2:43200"}, {"name": "other", "kind": "connect", "address": "192.168.1.3:56789"}]
         with patch.object(phone, "discover", return_value=services), patch.object(phone, "connect_phone", return_value={"ok": True, "connected": True}) as connect:

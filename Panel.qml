@@ -277,7 +277,7 @@ Panel {
         }
         function status(): string {
             return JSON.stringify({
-                version: "0.3.3",
+                version: "0.3.4",
                 name: "OmaDroid",
                 theme: {
                     background: root.colors.background.toString(),
@@ -669,7 +669,7 @@ Panel {
                                         Label {
                                             Layout.fillWidth: true
                                             color: root.muted
-                                            text: remembered.modelData.paused ? "Disconnected by you · reconnect is paused" : remembered.modelData.nearby ? "Nearby · ready to reconnect" : "Offline · check Wireless debugging on the phone"
+                                            text: remembered.modelData.paused ? "Reconnect paused · choose Connect to resume; no new pairing needed" : remembered.modelData.nearby ? "Nearby · ready to reconnect" : "Offline · check Wireless debugging on the phone"
                                         }
                                     }
                                     ActionButton {
@@ -697,7 +697,7 @@ Panel {
                                 }
                                 Label {
                                     width: parent.width
-                                    text: "Already paired with this computer? Connect to enable mirroring."
+                                    text: "Discovered live on your local network; this is not a saved pairing. Already paired with this computer? Choose Connect. Otherwise, use the Connect tab to pair."
                                     color: root.muted
                                 }
                                 RowLayout {
@@ -902,7 +902,12 @@ Panel {
                                 NoteBox {
                                     width: parent.width
                                     title: "Use the pairing dialog’s details"
-                                    text: "It shows an IP address, a pairing port, and a six-digit code. These can change each time you open it."
+                                    text: "It shows an IP address, a pairing port, and a six-digit code. These can change each time you open it. Use detected address when available."
+                                }
+                                NoteBox {
+                                    width: parent.width
+                                    title: "Tailscale or another phone VPN?"
+                                    text: "Android may show a VPN address instead of Wi-Fi. OmaDroid does not accept Tailscale's 100.64–100.127 addresses. Use a detected Wi-Fi pairing address, or pause the phone VPN and reopen the pairing dialog. After pairing, you can turn the VPN back on and choose Connect beside the saved phone. Keep both devices on the same local network."
                                 }
                                 Repeater {
                                     model: root.pairServices
@@ -1210,6 +1215,16 @@ Panel {
                         }
                         HelpTopic {
                             width: parent.width
+                            title: "Tailscale, VPNs, and reconnecting"
+                            detail: "Pair using the phone’s Wi-Fi address. Android may show its VPN address in Wireless debugging; Tailscale’s 100.64–100.127 addresses are not accepted by OmaDroid. Choose Use detected address while the pairing-code dialog is open, or temporarily pause the phone VPN and reopen that dialog. Use its new pairing port and code.\n\nAfter pairing, turn the VPN back on if needed. Keep the phone and computer on the same local network, refresh OmaDroid, and choose Connect beside the saved phone. A network change can briefly interrupt Android debugging; wait for Wireless debugging to settle and try Connect again with its current connection address. You do not need to pair again merely because you disconnected.\n\nDisconnect deliberately pauses automatic reconnect until Connect succeeds. Stop mirror only closes the mirror and keeps the phone connected. If a VPN exit node or kill switch blocks local traffic, allow LAN access in the VPN settings or pause the VPN while mirroring. OmaDroid does not change VPN settings or provide remote mirroring over Tailscale."
+                        }
+                        HelpTopic {
+                            width: parent.width
+                            title: "Why can I see a phone before pairing?"
+                            detail: "Nearby phones advertise their name and debugging address on the local network. That live discovery is separate from saved connections and does not authorize this computer. Each computer needs its own Android pairing approval. Copying the plugin does not copy ADB keys or saved phone profiles."
+                        }
+                        HelpTopic {
+                            width: parent.width
                             title: "KDE Connect: what it adds"
                             detail: "KDE Connect is optional. Install it on both the phone and computer, then pair them inside KDE Connect.\n\nIt provides battery information, notifications, file sharing, and Ring. OmaDroid’s screen mirroring uses its own Android debugging connection. The two pairing processes and online statuses are independent."
                         }
@@ -1222,7 +1237,7 @@ Panel {
                             width: parent.width
                             Label {
                                 width: parent.width
-                                text: "OmaDroid · 0.3.3"
+                                text: "OmaDroid · 0.3.4"
                                 font.bold: true
                             }
                             Label {

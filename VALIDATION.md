@@ -1,4 +1,12 @@
-# Validation — 0.3.3
+# Validation — 0.3.4
+
+Verification for 0.3.4 on 2026-09-13:
+
+- All 93 Python tests pass, including shared-range address rejection before any ADB call, actionable VPN guidance, preserving a paused profile after connection failure, successful reconnection without pairing, and a real isolated ADB daemon startup test. The daemon test uses a separate port/key store, disables network-phone discovery, selects a nonexistent USB device, and cleans up its own daemon.
+- QML lint, Omarchy manifest validation, and whitespace checks pass. The new pairing guidance was visually inspected in the actual Omarchy panel with the current dark theme and a temporary Catppuccin Latte palette; the original palette was restored. Screenshots contain no phone identifiers or pairing codes.
+- Installed on two Omarchy desktops with settings and saved authorization preserved. On the freshly configured desktop, verified a cold local ADB startup through the updated backend with no status errors, after removing the temporary startup-service workaround. The phone's intentional reconnect pause remained intact.
+- The preceding real-device diagnosis verified wireless pairing using the phone's Wi-Fi address, followed by successful connection with Tailscale active. The user also verified Disconnect/Connect on the second desktop. Direct remote mirroring over a Tailscale address is not implemented or claimed. Exit-node and kill-switch combinations have not been exhaustively tested.
+- No phone endpoint range, helper executable, root permission, or automatic pairing behavior was added. Pairing codes remain stdin-only; shared-range addresses are rejected with specific instructions. Existing marketplace review status does not constitute approval of this release.
 
 Additional verification for 0.3.3 on 2026-09-12:
 

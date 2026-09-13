@@ -1,6 +1,13 @@
 # OmaDroid screenshots
 
-Real captures of OmaDroid 0.3.1 running in Omarchy Shell with the user's active dark theme. The plugin uses the installed Omarchy palette, fonts, and corner settings. Long pages scroll.
+Real captures of OmaDroid running in Omarchy Shell. The original gallery shows 0.3.1; the VPN pairing guidance below shows 0.3.4. The plugin uses the installed Omarchy palette, fonts, and corner settings. Long pages scroll.
+
+## Pairing with Tailscale or another phone VPN — 0.3.4
+
+The pairing page now explains Wi-Fi address selection and reconnecting after the VPN is enabled again. These live captures were checked in the active dark theme and a temporary Catppuccin Latte palette; the user's original palette was restored. The empty fields show placeholders, not phone addresses or pairing codes.
+
+<img src="screenshots/pair-v0.3.4-dark.png" width="400" alt="OmaDroid pairing page in a dark theme with Tailscale and VPN instructions">
+<img src="screenshots/pair-v0.3.4-light.png" width="400" alt="The same pairing guidance in a light theme">
 
 ## Live mirroring — marketplace preview
 

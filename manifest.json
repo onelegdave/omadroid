@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "onelegdave.omadroid",
   "name": "OmaDroid",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "author": "OneLegDave",
   "license": "MIT",
   "description": "Your Android on Omarchy. Guided setup, desktop tool installation, and polished phone mirroring over Wi-Fi or USB.",

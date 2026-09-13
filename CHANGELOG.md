@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.4 — 2026-09-13
+
+- Explain how to pair over Wi-Fi when Android displays a Tailscale or other VPN address, including returning to the VPN after pairing. Shared-range addresses remain unsupported and now get actionable guidance.
+- Explain live nearby-phone discovery, per-computer authorization, and how Connect resumes an intentional Disconnect without pairing again. Connection failures now include recovery steps for VPN/network changes.
+- Fix automatic startup of the local ADB daemon on a fresh desktop. No separate startup service is required.
+
 ## 0.3.3 — 2026-09-12
 
 - Rename the plugin ID and shell command target to `onelegdave.omadroid`.

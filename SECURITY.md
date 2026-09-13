@@ -1,6 +1,6 @@
 # OmaDroid security and network behavior
 
-Audit target: OmaDroid 0.3.3, 2026-09-12. Version 0.3.3 renames the plugin ID and adds local configuration migration; the old tree is validated, backed up, and disabled without launching a command. Version 0.3.2 changes only release metadata and documentation/assets. The 0.3.1 change adds an explicit author website button to the audited 0.3.0 runtime. This describes the source shipped in this folder and the installed distro tools tested on the development desktop.
+Review target: OmaDroid 0.3.4, 2026-09-13. Version 0.3.4 adds VPN-specific rejection guidance, clearer reconnect instructions, and fixes local ADB daemon startup. The phone endpoint allowlist is unchanged. Version 0.3.3 introduced plugin ID migration. This describes the source shipped in this folder and the installed distro tools tested on the development desktop.
 
 ## No phone-home functionality
 
@@ -20,7 +20,9 @@ Runtime network activity is limited by the implemented interfaces and address po
 
 Phone endpoints must be literal addresses in RFC 1918 IPv4, IPv4 link-local, IPv6 ULA, or IPv6 link-local ranges. Public Internet addresses, hostnames, loopback, unspecified, multicast, and limited-broadcast endpoints are rejected. Public IPv6 phone connections and remote ADB-server overrides are intentionally unsupported. Private addresses can still be routed through a user-configured VPN; this is an address restriction, not a firewall or physical-network guarantee.
 
-ADB's remote-server environment overrides are replaced with the fixed loopback server address. Proxy variables, executable overrides, `LD_*`, `PYTHON*`, shell startup overrides, and ambient PATH are not passed to helpers. The scrcpy server resource comes from `/usr/share/scrcpy/scrcpy-server`, not an environment-selected download or script.
+ADB's remote-server environment overrides are replaced with `ADB_SERVER_SOCKET=tcp:localhost:5037`. ADB recognizes this spelling as local and uses its loopback connection/listener, allowing the standard daemon to start on demand. The earlier numeric-loopback spelling was treated as a remote server by ADB and failed on a fresh desktop without an existing daemon. No LAN ADB-server listener, root service, or new executable is added. Proxy variables, executable overrides, `LD_*`, `PYTHON*`, shell startup overrides, and ambient PATH are not passed to helpers. The scrcpy server resource comes from `/usr/share/scrcpy/scrcpy-server`, not an environment-selected download or script.
+
+Shared-range IPv4 (`100.64.0.0/10`, including Tailscale addresses) remains rejected before any pairing or connection command, with instructions to use Wi-Fi discovery or temporarily pause the phone VPN. No VPN address is silently rewritten to another device address, and no VPN configuration is changed. Discovery is untrusted metadata, not proof of authorization. Explicit Disconnect continues to pause automatic reconnect; a failed Connect preserves that state, and a successful Connect resumes it without new pairing.
 
 Regression tests reject network-client imports in runtime Python, remote-content/network APIs in QML except the exact click handler for the fixed author URL, changes to the executable allowlist without updating the test, and public-address pairing/connection requests before any command runs. These are review tripwires, not a proof against deliberately malicious future changes.
 

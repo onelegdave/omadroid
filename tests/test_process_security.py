@@ -3,6 +3,7 @@ from contextlib import contextmanager
 import os
 from pathlib import Path
 import shutil
+import socket
 import stat
 import tempfile
 import time
@@ -12,6 +13,28 @@ import safe_process as commands
 
 
 class ProcessSecurityTests(unittest.TestCase):
+    def test_local_adb_socket_starts_a_missing_daemon(self):
+        # Use an isolated port, key store, and nonexistent USB serial. Never
+        # stop the user's normal ADB server or connect to their network phones.
+        with tempfile.TemporaryDirectory() as temp, socket.socket() as reserve:
+            reserve.bind(('127.0.0.1', 0))
+            port = reserve.getsockname()[1]
+            env = commands.tool_environment()
+            env.update(HOME=temp, ANDROID_USER_HOME=temp, ADB_MDNS='0',
+                       ADB_MDNS_AUTO_CONNECT='0',
+                       ADB_SERVER_SOCKET=env['ADB_SERVER_SOCKET'].rsplit(':', 1)[0] + ':' + str(port))
+            reserve.close()
+            with patch.object(commands, 'tool_environment', return_value=env):
+                try:
+                    result = commands.run(['adb', '--one-device', 'OMADROID-TEST-NO-DEVICE', 'start-server'], timeout=15)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    result = commands.run(['adb', 'devices'])
+                    self.assertIn('List of devices attached', result.stdout)
+                    with socket.create_connection(('127.0.0.1', port), timeout=2):
+                        pass
+                finally:
+                    commands.run(['adb', 'kill-server'], timeout=5)
+
     def python(self,code,timeout=1,**limits):
         with commands.launch('python3',['-I','-c',code]) as process:
             return commands.collect(process,[],timeout,**limits)
@@ -24,7 +47,7 @@ class ProcessSecurityTests(unittest.TestCase):
         child=json.loads(result.stdout)
         self.assertEqual(child,env)
         self.assertEqual(child['PATH'],'/usr/bin')
-        self.assertEqual(child['ADB_SERVER_SOCKET'],'tcp:127.0.0.1:5037')
+        self.assertEqual(child['ADB_SERVER_SOCKET'],'tcp:localhost:5037')
         self.assertEqual(child['ADB'],'/usr/bin/adb')
         for key in ('PYTHONPATH','LD_PRELOAD','HTTPS_PROXY','BASH_ENV'):
             self.assertNotIn(key,child)
