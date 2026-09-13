@@ -124,6 +124,10 @@ Built and tested initially against Omarchy's installed Quickshell API, scrcpy 4.
 
 Upstream documentation: [scrcpy](https://github.com/Genymobile/scrcpy), [Android wireless debugging](https://developer.android.com/tools/adb#wireless-android11-command-line), [KDE Connect](https://kdeconnect.kde.org/).
 
+## AI assistance
+
+AI tools were used to assist work on this project, including development and documentation. AI assistance is acknowledged here; authorship and maintenance remain with the human project contributors.
+
 ## License
 
 Created and maintained by [OneLegDave](https://www.onelegdave.dev/).
