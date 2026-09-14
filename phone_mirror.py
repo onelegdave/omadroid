@@ -423,12 +423,37 @@ def finish_pairing(address):
     return {"ok": True, "paired": True, "message": "Pairing complete. Return to the main Wireless debugging screen on your phone; the plugin will connect when it appears. You can also enter that screen’s connection address below."}
 
 
+def adb_can_start():
+    """Presence of /usr/bin/adb is not readiness. A protobuf mismatch leaves
+    the ELF on disk and unusable; the panel would then say the desktop is
+    ready while every adb call fails."""
+    if not commands.available("adb"):
+        return False, None
+    try:
+        result = run(["adb", "version"], timeout=5)
+    except UserError as error:
+        return False, str(error)
+    if result.returncode == 0:
+        return True, None
+    text = (result.stderr or result.stdout or "adb failed.").strip()[-1200:]
+    if "shared libraries" in text or "libprotobuf" in text:
+        return False, (
+            "adb is installed but cannot start because a system library is missing or too old. "
+            "Upgrade protobuf so it matches android-tools, then reopen this panel.\n" + text
+        )
+    return False, text
+
+
 def status():
     dependencies = {key: bool(commands.available(value)) for key, value in
                     {"adb": "adb", "scrcpy": "scrcpy", "kdeconnect": "kdeconnect-cli", "avahi": "avahi-browse", "installer": "omarchy-launch-terminal"}.items()}
     dependencies['usbRules'] = commands.available('pacman') and run(['pacman', '-Qq', 'android-udev']).returncode == 0
     dependencies['discoveryReady'] = dependencies['avahi'] and commands.available('systemctl') and run(['systemctl', 'is-active', '--quiet', 'avahi-daemon.service']).returncode == 0
+    adb_ok, adb_error = adb_can_start()
+    dependencies["adb"] = adb_ok
     result = {"dependencies": dependencies, "devices": [], "services": [], "saved": saved(), "errors": []}
+    if adb_error:
+        result["errors"].append(adb_error)
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
         kde = pool.submit(kde_devices)
         adb = pool.submit(checked, ["adb", "devices", "-l"]) if dependencies["adb"] else None
