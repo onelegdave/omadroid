@@ -46,6 +46,26 @@ PERMISSIONS no permissions (user in plugdev group; are your udev rules wrong?)
         self.assertTrue(devices[2]["wireless"])
         self.assertEqual([d["state"] for d in devices[3:]], ["unauthorized", "offline", "no permissions"])
 
+    def test_unrunnable_adb_is_not_ready(self):
+        broken = subprocess.CompletedProcess(
+            ["adb", "version"], 127, "",
+            "/usr/bin/adb: error while loading shared libraries: libprotobuf.so.36.1.0: cannot open shared object file",
+        )
+
+        def fake_run(args, timeout=8, input=None):
+            if args[:2] == ["adb", "version"]:
+                return broken
+            return subprocess.CompletedProcess(args, 0, "", "")
+
+        with patch.object(phone.commands, "available", side_effect=lambda name: name != "kdeconnect-cli"), \
+             patch.object(phone, "run", side_effect=fake_run), \
+             patch.object(phone, "kde_devices", return_value={"devices": [], "error": ""}), \
+             patch.object(phone, "saved", return_value=[]):
+            result = phone.status()
+        self.assertFalse(result["dependencies"]["adb"])
+        self.assertTrue(any("libprotobuf" in error for error in result["errors"]))
+        self.assertEqual(result["devices"], [])
+
     def test_mdns_keeps_pairing_and_connection_ports_separate(self):
         output = """List of discovered mdns services
 adb-test _adb-tls-pairing._tcp. 192.168.1.2:32100
