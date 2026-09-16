@@ -19,10 +19,28 @@ class NetworkPolicyTests(unittest.TestCase):
                 else:continue
                 self.assertFalse(forbidden.intersection(module.split('.')[0] for module in modules),name)
         qml=(ROOT/'Panel.qml').read_text()
-        # The author credit may open this fixed URL only from its click handler.
-        author_link='onClicked: Qt.openUrlExternally("https://www.onelegdave.dev/")'
-        self.assertEqual(qml.count(author_link),1)
-        qml=qml.replace(author_link,'')
+        # Reviewed About links may open only from explicit click handlers.
+        links = (
+            'https://www.onelegdave.dev/',
+            'https://github.com/onelegdave',
+            'https://github.com/onelegdave/omadroid',
+            'https://x.com/OneLegDavePDX',
+            'https://github.com/onelegdave/omadroid/blob/main/LICENSE',
+            'https://github.com/Genymobile/scrcpy/blob/master/LICENSE',
+            'https://source.android.com/setup/start/licenses',
+            'https://invent.kde.org/network/kdeconnect-kde/-/blob/master/COPYING',
+        )
+        for url in links:
+            handler = 'onClicked: Qt.openUrlExternally("' + url + '")'
+            self.assertEqual(qml.count(handler), 1, url)
+            qml = qml.replace(handler, '')
+        # The owner-confirmed support destination is fixed and click-only.
+        self.assertIn('readonly property string coffeeUrl: "https://buymeacoffee.com/onelegdave"', qml)
+        self.assertIn('visible: root.coffeeUrl !== ""', qml)
+        qml = qml.replace('readonly property string coffeeUrl: "https://buymeacoffee.com/onelegdave"', '')
+        coffee_handler = 'onClicked: Qt.openUrlExternally(root.coffeeUrl)'
+        self.assertEqual(qml.count(coffee_handler), 1)
+        qml = qml.replace(coffee_handler, '')
         for token in ('XMLHttpRequest','WebSocket','WebEngine','https://','http://','execDetached','openUrlExternally'):
             self.assertNotIn(token,qml)
     def test_helper_allowlist_cannot_silently_gain_downloaders(self):

@@ -4,7 +4,7 @@ Review target: OmaDroid 0.3.4, 2026-09-13. Version 0.3.4 adds VPN-specific rejec
 
 ## No phone-home functionality
 
-OmaDroid contains no telemetry, analytics, advertising, cloud account, cloud relay, remote configuration, automatic update check, crash upload, HTTP client, or remote-code download path. It does not transmit diagnostics or phone identities to the author, GitHub, Omarchy, or another reporting service. Opening the panel or Help does not fetch any website. The OneLegDave credit opens a fixed HTTPS address in the default browser only when clicked, with no query parameters or phone data. There is no prefetch, remote image, or embedded web view. After that click, the browser makes a normal website connection; its cookies and the site's own behavior are outside this plugin's control.
+OmaDroid contains no telemetry, analytics, advertising, cloud account, cloud relay, remote configuration, automatic update check, crash upload, HTTP client, or remote-code download path. It does not transmit diagnostics or phone identities to the author, GitHub, Omarchy, or another reporting service. Opening the panel or Help does not fetch any website. About and support buttons open fixed HTTPS links in the default browser only when clicked, with no added query parameters or phone data. There is no prefetch, remote image, or embedded web view. After that click, the browser makes a normal website connection; its cookies and the site's own behavior are outside this plugin's control.
 
 Runtime network activity is limited by the implemented interfaces and address policy:
 
@@ -14,7 +14,7 @@ Runtime network activity is limited by the implemented interfaces and address po
 | Discover nearby phones | ADB mDNS, or Avahi through the system D-Bus. Discovery uses the local network. |
 | KDE Connect status and Ring | Local session D-Bus / distro KDE Connect client. KDE Connect handles its own paired-device traffic. |
 | Desktop error notification | Local desktop notification service. Nothing is uploaded. |
-| Author website | Only after clicking OneLegDave in Help: the default browser opens `https://www.onelegdave.dev/`. |
+| About and optional support links | Only after clicking a link in Help: the default browser opens the author website (`www.onelegdave.dev`), GitHub profile/repository/license pages (`github.com`), X profile (`x.com/OneLegDavePDX`), support page (`buymeacoffee.com/onelegdave`), or upstream license pages (`source.android.com`, `invent.kde.org`). No payment processing is embedded in the plugin. |
 | Install dependencies | Only after the user chooses an Install button: a visible terminal runs `sudo /usr/bin/pacman -S --needed` with a fixed package group. Pacman uses the user's configured repositories/mirrors and signature policy. |
 | Enable wireless discovery | Only after the user chooses discovery installation/enabling: `sudo /usr/bin/systemctl enable --now avahi-daemon.service`. |
 
