@@ -137,6 +137,10 @@ Built and tested initially against Omarchy's installed Quickshell API, scrcpy 4.
 
 Upstream documentation: [scrcpy](https://github.com/Genymobile/scrcpy), [Android wireless debugging](https://developer.android.com/tools/adb#wireless-android11-command-line), [KDE Connect](https://kdeconnect.kde.org/).
 
+## Contributors
+
+Thanks to [@HermeticOrmus](https://github.com/HermeticOrmus) for fixing ADB readiness detection in [#1](https://github.com/onelegdave/omadroid/pull/1).
+
 ## AI assistance
 
 Codex assisted with development and documentation on this project, alongside other AI tools at various points. OneLegDave remains the human owner and maintainer.

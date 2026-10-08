@@ -46,6 +46,71 @@ PERMISSIONS no permissions (user in plugdev group; are your udev rules wrong?)
         self.assertTrue(devices[2]["wireless"])
         self.assertEqual([d["state"] for d in devices[3:]], ["unauthorized", "offline", "no permissions"])
 
+    def test_unrunnable_adb_is_not_ready(self):
+        for library in ("libprotobuf.so.36.1.0", "libusb-1.0.so.0"):
+            with self.subTest(library=library):
+                broken = subprocess.CompletedProcess(
+                    ["adb", "version"], 127, "",
+                    "/usr/bin/adb: error while loading shared libraries: " + library + ": cannot open shared object file",
+                )
+                with patch.object(phone.commands, "available", side_effect=lambda name: name in ("adb", "scrcpy")), \
+                     patch.object(phone, "run", return_value=broken) as run, \
+                     patch.object(phone, "checked") as devices, \
+                     patch.object(phone, "discover") as discovery, \
+                     patch.object(phone, "kde_devices", return_value={"devices": [], "error": ""}):
+                    result = phone.status()
+                self.assertFalse(result["dependencies"]["adb"])
+                self.assertTrue(result["dependencies"]["scrcpy"])
+                self.assertEqual(result["devices"], [])
+                self.assertEqual(result["services"], [])
+                self.assertIn(library, result["errors"][0])
+                self.assertIn("full system update", result["errors"][0])
+                self.assertNotIn("Upgrade protobuf", result["errors"][0])
+                run.assert_called_once_with(["adb", "version"], timeout=5)
+                devices.assert_not_called()
+                discovery.assert_not_called()
+
+    def test_missing_adb_is_not_probed(self):
+        with patch.object(phone.commands, "available", return_value=False), \
+             patch.object(phone, "run") as run:
+            self.assertEqual(phone.adb_can_start(), (False, None))
+        run.assert_not_called()
+
+    def test_status_enumerates_devices_after_successful_adb_probe(self):
+        version = subprocess.CompletedProcess(["adb", "version"], 0, "Android Debug Bridge version 1.0.41", "")
+        with patch.object(phone.commands, "available", side_effect=lambda name: name in ("adb", "scrcpy")), \
+             patch.object(phone, "run", return_value=version) as run, \
+             patch.object(phone, "checked", return_value="List of devices attached\n") as devices, \
+             patch.object(phone, "discover", return_value=[]) as discovery, \
+             patch.object(phone, "kde_devices", return_value={"devices": [], "error": ""}):
+            result = phone.status()
+        self.assertTrue(result["dependencies"]["adb"])
+        self.assertEqual(result["errors"], [])
+        run.assert_called_once_with(["adb", "version"], timeout=5)
+        devices.assert_called_once_with(["adb", "devices", "-l"])
+        discovery.assert_called_once_with()
+
+    def test_adb_probe_failure_or_deadline_skips_device_and_discovery_calls(self):
+        failures = (
+            subprocess.CompletedProcess(["adb", "version"], 1, "", "adb cannot start"),
+            phone.UserError("adb: Command exceeded its deadline"),
+        )
+        for failure in failures:
+            with self.subTest(failure=str(failure)):
+                with patch.object(phone.commands, "available", side_effect=lambda name: name in ("adb", "scrcpy")), \
+                     patch.object(phone, "run", **({"side_effect": failure} if isinstance(failure, Exception) else {"return_value": failure})), \
+                     patch.object(phone, "checked") as devices, \
+                     patch.object(phone, "discover") as discovery, \
+                     patch.object(phone, "kde_devices", return_value={"devices": [], "error": ""}):
+                    result = phone.status()
+                self.assertFalse(result["dependencies"]["adb"])
+                self.assertTrue(result["errors"])
+                self.assertNotIn("full system update", result["errors"][0])
+                self.assertEqual(result["devices"], [])
+                self.assertEqual(result["services"], [])
+                devices.assert_not_called()
+                discovery.assert_not_called()
+
     def test_mdns_keeps_pairing_and_connection_ports_separate(self):
         output = """List of discovered mdns services
 adb-test _adb-tls-pairing._tcp. 192.168.1.2:32100
