@@ -66,6 +66,8 @@ Panel {
     property string connectionEvent: ""
     readonly property bool busy: actionProcess.running
     readonly property bool ready: !!snapshot.dependencies.adb && !!snapshot.dependencies.scrcpy
+    readonly property bool installerReady: !!snapshot.dependencies.installer
+    readonly property string installerUnavailableMessage: "Automatic installation is unavailable on this desktop. Update your system using your distribution's supported updater, then run the commands below in a terminal. Refresh when finished."
     readonly property int readyCount: snapshot.devices.filter(d => d.state === "device").length
     readonly property int mirroringCount: snapshot.devices.filter(d => d.mirroring).length
     readonly property var connectServices: snapshot.services.filter(s => s.kind === "connect")
@@ -229,9 +231,24 @@ Panel {
         });
         pairCode.text = "";
     }
+    function manualInstallCommand(group) {
+        return ({
+                core: "sudo pacman -S --needed scrcpy android-tools",
+                companion: "sudo pacman -S --needed kdeconnect",
+                discovery: "sudo pacman -S --needed avahi\nsudo systemctl enable --now avahi-daemon.service",
+                usb: "sudo pacman -S --needed android-udev"
+            })[group] || "";
+    }
     function installTools(group) {
         if (["core", "companion", "discovery", "usb"].indexOf(group) < 0)
             return;
+        if (!installerReady) {
+            failed = true;
+            message = "Automatic installation is unavailable on this desktop. " +
+                "Update your system using your distribution's supported updater, then run in a terminal:\n\n" +
+                manualInstallCommand(group) + "\n\nRefresh when finished.";
+            return;
+        }
         message = "The installer is opening in a terminal. Enter your desktop password there if asked, then return here. Tool status updates automatically.";
         failed = false;
         act({
@@ -278,7 +295,7 @@ Panel {
         }
         function status(): string {
             return JSON.stringify({
-                version: "0.3.5",
+                version: "0.3.6",
                 name: "OmaDroid",
                 theme: {
                     background: root.colors.background.toString(),
@@ -766,9 +783,21 @@ Panel {
                         ActionButton {
                             width: parent.width
                             text: root.snapshot.dependencies.kdeconnect ? "Open KDE Connect" : "Install KDE Connect"
+                            enabled: !!root.snapshot.dependencies.kdeconnect || root.installerReady
                             onClicked: root.snapshot.dependencies.kdeconnect ? root.act({
                                 action: "open-companion"
                             }) : root.installTools("companion")
+                        }
+                        Label {
+                            width: parent.width
+                            visible: root.received > 0 && !root.snapshot.dependencies.kdeconnect && !root.installerReady
+                            text: root.installerUnavailableMessage
+                            color: root.muted
+                        }
+                        ManualInstallCommands {
+                            width: parent.width
+                            visible: root.received > 0 && !root.snapshot.dependencies.kdeconnect && !root.installerReady
+                            group: "companion"
                         }
                     }
                     Column {
@@ -808,7 +837,7 @@ Panel {
                                 }
                                 Label {
                                     width: parent.width
-                                    text: "OmaDroid uses two desktop tools to display and control your phone. Install them here; no terminal commands to memorize."
+                                    text: root.installerReady ? "OmaDroid uses two desktop tools to display and control your phone. Install them here; no terminal commands to memorize." : "OmaDroid uses two desktop tools to display and control your phone. Install them using the terminal commands below."
                                     color: root.muted
                                 }
                                 ToolsList {
@@ -1172,7 +1201,7 @@ Panel {
                             }
                             Label {
                                 width: parent.width
-                                text: "Choose what to install. A terminal shows the packages and asks for your desktop password if needed. Return here when it finishes."
+                                text: root.installerReady ? "Choose what to install. A terminal shows the packages and asks for your desktop password if needed. Return here when it finishes." : "Choose which tools to install. Manual terminal commands are shown for missing tools."
                                 color: root.muted
                             }
                             ToolsList {
@@ -1238,7 +1267,7 @@ Panel {
                             width: parent.width
                             Label {
                                 width: parent.width
-                                text: "About OmaDroid · 0.3.5"
+                                text: "About OmaDroid · 0.3.6"
                                 font.bold: true
                             }
                             Label {
@@ -1721,6 +1750,12 @@ Panel {
         id: toolsList
         property bool coreOnly: false
         spacing: Style.space(12)
+        Label {
+            width: parent.width
+            visible: root.received > 0 && !root.installerReady && (!root.ready || (!toolsList.coreOnly && (!root.snapshot.dependencies.kdeconnect || !root.snapshot.dependencies.discoveryReady || !root.snapshot.dependencies.usbRules)))
+            text: root.installerUnavailableMessage
+            color: root.muted
+        }
         ToolRow {
             width: parent.width
             title: "Mirroring tools"
@@ -1791,9 +1826,28 @@ Panel {
         ActionButton {
             width: parent.width
             visible: !toolRow.available
+            enabled: root.installerReady
             text: toolRow.buttonText
             primary: toolRow.group === "core"
             onClicked: root.installTools(toolRow.group)
         }
+        ManualInstallCommands {
+            width: parent.width
+            visible: root.received > 0 && !toolRow.available && !root.installerReady
+            group: toolRow.group
+        }
+    }
+    component ManualInstallCommands: TextEdit {
+        property string group
+        text: root.manualInstallCommand(group)
+        textFormat: TextEdit.PlainText
+        readOnly: true
+        selectByMouse: true
+        wrapMode: TextEdit.Wrap
+        color: root.ink
+        selectionColor: root.accent
+        selectedTextColor: root.accentInk
+        font.family: root.fontStyle.family
+        font.pixelSize: root.fontStyle.bodySmall
     }
 }

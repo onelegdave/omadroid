@@ -6,9 +6,9 @@ An Omarchy bar plugin for mirroring and controlling Android phones with your com
 
 No root, paid service, Samsung account, or additional Android mirroring app is required. This is an independent community plugin, not an official Omarchy, KDE, Samsung, or scrcpy product.
 
-![OmaDroid mirroring an Android display beside its live phone controls](preview.png)
+![OmaDroid desktop setup with manual installation guidance](preview.png)
 
-[More screenshots](docs/screenshots.md) · [Release v0.3.5](https://github.com/onelegdave/omadroid/releases/tag/v0.3.5) · [Security and privacy](SECURITY.md)
+[More screenshots](docs/screenshots.md) · [Release v0.3.6](https://github.com/onelegdave/omadroid/releases/tag/v0.3.6) · [Security and privacy](SECURITY.md)
 
 ## Install
 
@@ -20,7 +20,7 @@ omarchy plugin add https://github.com/onelegdave/omadroid --enable
 
 Open the phone icon in the bar and follow **Connect → Desktop → Phone → Pair → Ready**. OmaDroid offers explicit Install buttons for missing desktop tools. Android debugging authorization is required; KDE Connect alone cannot mirror the phone.
 
-The command installs the current upstream branch. For the numbered release, download and extract `omadroid-v0.3.5.tar.gz` from [Releases](https://github.com/onelegdave/omadroid/releases/tag/v0.3.5), review its source, and use the local installer below. Checksums are included with the release.
+The command installs the current upstream branch. For the numbered release, download and extract `omadroid-v0.3.6.tar.gz` from [Releases](https://github.com/onelegdave/omadroid/releases/tag/v0.3.6), review its source, and use the local installer below. Checksums are included with the release.
 
 ## Requirements
 
@@ -38,6 +38,8 @@ omarchy restart shell
 ```
 
 Open the phone icon in the bar, then **Connect → Desktop**. Choose **Install required tools** if prompted. The app opens a terminal that shows the packages and requests your desktop password if needed. Return to OmaDroid when it finishes; status refreshes automatically. **Help → Desktop tools** also offers optional KDE Connect, wireless discovery, and USB access rules. Discovery installation enables the Avahi service. No package is installed just by opening the panel.
+
+If OmaDroid cannot use the desktop's installation launcher, installation buttons are disabled and selectable manual commands appear for missing tools. Update your system using your distribution's supported updater first, run the required commands in a terminal, then refresh OmaDroid. Already installed tools remain usable. Symlinked or untrusted launchers are still refused; do not replace the launcher or weaken its permissions to bypass this check.
 
 The installer validates file ownership/types and the manifest ID, backs up shell.json and any previous installation, installs the fixed file list into `~/.config/omarchy/plugins/onelegdave.omadroid`, and adds the bar entry if needed. Existing settings and bar placement are preserved. It respects XDG_CONFIG_HOME and does not edit packaged Omarchy files. It launches no commands and downloads nothing; run the shell restart separately to load the update. Installation runs as your desktop user. Backups are under `~/.config/omarchy/plugin-backups` and `shell.json.bak-omadroid-*`.
 

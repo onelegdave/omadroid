@@ -1,6 +1,13 @@
 # OmaDroid screenshots
 
-Real captures of OmaDroid running in Omarchy Shell. The original gallery shows 0.3.1; the VPN pairing guidance below shows 0.3.4. The plugin uses the installed Omarchy palette, fonts, and corner settings. Long pages scroll.
+Captures of the actual OmaDroid interface. The 0.3.6 setup captures use an isolated Quickshell instance with synthetic dependency status; the older gallery was captured in Omarchy Shell. The original gallery shows 0.3.1; the VPN pairing guidance below shows 0.3.4. The plugin uses the installed Omarchy palette, fonts, and corner settings. Long pages scroll.
+
+## Manual desktop setup — 0.3.6 marketplace preview
+
+The root `preview.png` shows Desktop setup when the installation launcher is unavailable. These dark and light captures render the actual QML in an isolated Quickshell instance using synthetic status with no phones and missing desktop tools. They contain no account data, device identifiers, or credentials. The installed plugin and desktop settings were not changed. These captures verify the fallback interface; they do not demonstrate a physical-phone session or OmarchyMac compatibility.
+
+<img src="../preview.png" width="400" alt="OmaDroid desktop setup in a dark theme showing a selectable manual installation command">
+<img src="screenshots/desktop-v0.3.6-light.png" width="400" alt="The same manual setup guidance in a light theme">
 
 ## Pairing with Tailscale or another phone VPN — 0.3.4
 
@@ -8,12 +15,6 @@ The pairing page now explains Wi-Fi address selection and reconnecting after the
 
 <img src="screenshots/pair-v0.3.4-dark.png" width="400" alt="OmaDroid pairing page in a dark theme with Tailscale and VPN instructions">
 <img src="screenshots/pair-v0.3.4-light.png" width="400" alt="The same pairing guidance in a light theme">
-
-## Live mirroring — marketplace preview
-
-![A live Android Display settings page beside OmaDroid's mirroring controls](../preview.png)
-
-The root `preview.png` is the marketplace image. It shows the real scrcpy mirror and the matching LIVE phone card, with Stop mirror, Wake / unlock, Disconnect, and optional KDE Connect status visible. Android's Display settings page keeps personal app content out of the capture. The phone status bar was temporarily hidden for the screenshot and its prior display policy was restored immediately afterward. The local phone address is redacted in the final marketplace image. No simulated phone data or generated UI is used.
 
 ## Guided connection
 

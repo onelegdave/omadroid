@@ -1,6 +1,6 @@
 # OmaDroid security and network behavior
 
-Review target: OmaDroid 0.3.4, 2026-09-13. Version 0.3.4 adds VPN-specific rejection guidance, clearer reconnect instructions, and fixes local ADB daemon startup. The phone endpoint allowlist is unchanged. Version 0.3.3 introduced plugin ID migration. This describes the source shipped in this folder and the installed distro tools tested on the development desktop.
+Review target: OmaDroid 0.3.6, 2026-10-07. Version 0.3.6 checks ADB startup before declaring desktop readiness and provides manual setup guidance when the verified installation launcher is unavailable. Executable verification, launcher symlink rejection, permissions, and the phone endpoint allowlist are unchanged. This describes the source shipped in this folder and the installed distro tools tested on the development desktop.
 
 ## No phone-home functionality
 
@@ -42,6 +42,8 @@ Runtime state, identity metadata, session metadata, locks, and logs also use des
 
 Opening a terminal or KDE Connect is an explicit user action and creates a separate desktop session/service, which may remain open. The terminal reestablishes the controlled environment before launching the dependency installer. Package names and service names are fixed; phone text never becomes a local shell command. The fixed Android identity query uses a shell on the phone with no interpolated input.
 
+The 0.3.6 installer fallback disables installation actions when the existing launcher verification fails and displays fixed manual commands for the selected dependency group. A direct backend request still verifies the launcher at execution time; failure to enter the verified launch context returns manual setup guidance without starting an installer. Errors after a successful launch retain the existing deadline/output handling and cleanup. No launcher alias, symlink exception, additional tool, or privilege is accepted by this fallback. Displaying manual commands does not execute them.
+
 ## Phone data and authorization
 
 - Pairing codes go only through standard input, are cleared from the panel, and are neither saved nor put in process arguments or logs.
@@ -53,7 +55,7 @@ Opening a terminal or KDE Connect is an explicit user action and creates a separ
 
 ## Validation and limits
 
-The unreleased ADB readiness fix probes the existing verified `adb` executable with `version` before enabling device enumeration and wireless discovery. The probe uses the existing controlled environment, output caps, process-group cleanup, and a five-second deadline. Failure keeps desktop setup available and makes no device or discovery request. This adds no executable, endpoint, privilege, or symlink exception. Shared-library errors recommend the distribution's supported full system update; no update runs automatically.
+The 0.3.6 ADB readiness fix probes the existing verified `adb` executable with `version` before enabling device enumeration and wireless discovery. The probe uses the existing controlled environment, output caps, process-group cleanup, and a five-second deadline. Failure keeps desktop setup available and makes no device or discovery request. This adds no executable, endpoint, privilege, or symlink exception. Shared-library errors recommend the distribution's supported full system update; no update runs automatically.
 
 The audit includes hostile filesystem fixtures, PATH/environment poisoning, executable replacement after verification, output flooding, timeout/descendant cleanup, session log overflow, pairing-code handling, public endpoint rejection, and functional session tests. See [VALIDATION.md](VALIDATION.md) for the final count and live checks.
 
