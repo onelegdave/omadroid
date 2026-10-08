@@ -42,6 +42,8 @@ Runtime state, identity metadata, session metadata, locks, and logs also use des
 
 Opening a terminal or KDE Connect is an explicit user action and creates a separate desktop session/service, which may remain open. The terminal reestablishes the controlled environment before launching the dependency installer. Package names and service names are fixed; phone text never becomes a local shell command. The fixed Android identity query uses a shell on the phone with no interpolated input.
 
+The unreleased installer fallback disables installation actions when the existing launcher verification fails and displays fixed manual commands for the selected dependency group. A direct backend request still verifies the launcher at execution time; failure to enter the verified launch context returns manual setup guidance without starting an installer. Errors after a successful launch retain the existing deadline/output handling and cleanup. No launcher alias, symlink exception, additional tool, or privilege is accepted by this fallback. Displaying manual commands does not execute them.
+
 ## Phone data and authorization
 
 - Pairing codes go only through standard input, are cleared from the panel, and are neither saved nor put in process arguments or logs.

@@ -12,7 +12,7 @@ import signal
 import subprocess
 import sys
 import selectors
-from contextlib import contextmanager
+from contextlib import contextmanager, ExitStack
 import safe_files as files
 import safe_process as commands
 import time
@@ -676,6 +676,18 @@ def start_session(request):
         raise
 
 
+def manual_install_message(group):
+    command = {
+        'core': 'sudo pacman -S --needed scrcpy android-tools',
+        'companion': 'sudo pacman -S --needed kdeconnect',
+        'discovery': 'sudo pacman -S --needed avahi\nsudo systemctl enable --now avahi-daemon.service',
+        'usb': 'sudo pacman -S --needed android-udev',
+    }[group]
+    return ('Automatic installation is unavailable on this desktop. '
+            "Update your system using your distribution's supported updater, then run in a terminal:\n\n"
+            + command + '\n\nReturn to OmaDroid and refresh its status when finished.')
+
+
 def open_desktop_app(kind, group=None):
     if kind == 'install-tools':
         if group not in ('core', 'companion', 'discovery', 'usb'):
@@ -690,7 +702,11 @@ def open_desktop_app(kind, group=None):
         env = commands.tool_environment()
         args = ['/usr/bin/env', '-i', *[key + '=' + value for key, value in env.items()],
                 '/usr/bin/bash', '--noprofile', '--norc', str(source / 'install-deps.sh'), group]
-        with commands.launch('omarchy-launch-terminal', args, script=True) as process:
+        with ExitStack() as stack:
+            try:
+                process = stack.enter_context(commands.launch('omarchy-launch-terminal', args, script=True))
+            except (OSError, commands.ToolError):
+                raise UserError(manual_install_message(group)) from None
             result = commands.collect(process, args, 8)
     else:
         # A user-requested GUI runs as its own transient desktop service.

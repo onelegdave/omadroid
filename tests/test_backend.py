@@ -1,4 +1,5 @@
 import contextlib
+import errno
 import io
 import json
 import os
@@ -281,6 +282,97 @@ legacy _adb._tcp. 192.168.1.3:5555
     def test_unknown_actions_rejected(self):
         with self.assertRaises(phone.UserError):
             phone.action({"action": "shell", "command": "id"})
+
+    def test_symlinked_installer_is_refused_with_manual_guidance(self):
+        with tempfile.TemporaryDirectory() as temp:
+            link = Path(temp) / 'launcher'
+            link.symlink_to('/usr/bin/omarchy-launch-terminal')
+            original_open = os.open
+
+            def open_tool(path, flags, *args, **kwargs):
+                if path == 'omarchy-launch-terminal':
+                    return original_open(link, flags)
+                return original_open(path, flags, *args, **kwargs)
+
+            with patch.object(phone.commands.os, 'open', side_effect=open_tool), \
+                 patch.object(phone.commands.subprocess, 'Popen') as spawn:
+                self.assertFalse(phone.commands.available('omarchy-launch-terminal'))
+                with self.assertRaises(phone.UserError) as error:
+                    phone.action({'action': 'install-tools', 'group': 'core'})
+            self.assertIn('Automatic installation is unavailable', str(error.exception))
+            self.assertIn('sudo pacman -S --needed scrcpy android-tools', str(error.exception))
+            self.assertNotIn('Too many levels', str(error.exception))
+            spawn.assert_not_called()
+
+    def test_installer_launch_failures_give_requested_group_instructions(self):
+        groups = {
+            'core': 'scrcpy android-tools',
+            'companion': 'kdeconnect',
+            'discovery': 'avahi',
+            'usb': 'android-udev',
+        }
+        failures = (
+            FileNotFoundError(errno.ENOENT, 'missing launcher'),
+            PermissionError(errno.EACCES, 'launcher access denied'),
+            phone.commands.ToolError('Tool must be a root-owned, non-writable system file'),
+        )
+        for group, packages in groups.items():
+            for failure in failures:
+                with self.subTest(group=group, failure=type(failure).__name__):
+                    with patch.object(phone.commands, 'launch', side_effect=failure), \
+                         patch.object(phone.commands, 'collect') as collect:
+                        with self.assertRaises(phone.UserError) as error:
+                            phone.action({'action': 'install-tools', 'group': group})
+                    message = str(error.exception)
+                    self.assertIn('supported updater', message)
+                    self.assertIn('sudo pacman -S --needed ' + packages, message)
+                    self.assertNotIn(str(failure), message)
+                    if group == 'discovery':
+                        self.assertIn('sudo systemctl enable --now avahi-daemon.service', message)
+                    collect.assert_not_called()
+
+    def test_installer_collect_failure_preserves_error_and_closes_launcher(self):
+        closed = []
+
+        @contextlib.contextmanager
+        def launch(*args, **kwargs):
+            try:
+                yield object()
+            finally:
+                closed.append(True)
+
+        with patch.object(phone.commands, 'launch', launch), \
+             patch.object(phone.commands, 'collect', side_effect=phone.commands.ToolError('Command exceeded its deadline')):
+            with self.assertRaisesRegex(phone.commands.ToolError, 'deadline'):
+                phone.action({'action': 'install-tools', 'group': 'core'})
+        self.assertEqual(closed, [True])
+
+    def test_installer_success_preserves_verified_launch_route(self):
+        process = object()
+        calls = []
+
+        @contextlib.contextmanager
+        def launch(name, args, script=False):
+            calls.append((name, args, script))
+            yield process
+
+        with patch.object(phone.commands, 'launch', launch), \
+             patch.object(phone.commands, 'tool_environment', return_value={'PATH': '/usr/bin'}), \
+             patch.object(phone.commands, 'collect', return_value=subprocess.CompletedProcess([], 0, '', '')) as collect:
+            result = phone.action({'action': 'install-tools', 'group': 'core'})
+        self.assertTrue(result['ok'])
+        self.assertEqual(len(calls), 1)
+        name, args, script = calls[0]
+        self.assertEqual(name, 'omarchy-launch-terminal')
+        self.assertTrue(script)
+        self.assertEqual(args, ['/usr/bin/env', '-i', 'PATH=/usr/bin', '/usr/bin/bash', '--noprofile', '--norc', str(Path(phone.__file__).parent / 'install-deps.sh'), 'core'])
+        collect.assert_called_once_with(process, args, 8)
+
+    def test_unknown_install_group_never_launches(self):
+        with patch.object(phone.commands, 'launch') as launch:
+            with self.assertRaisesRegex(phone.UserError, 'Unknown dependency group'):
+                phone.action({'action': 'install-tools', 'group': 'core; touch /tmp/not-a-command'})
+        launch.assert_not_called()
 
     def test_disconnect_pauses_known_identity_and_only_target_transport(self):
         phone.write_connection_state({'phones':[{'identity':'KNOWN','name':'Pixel','address':'192.168.1.2:43200'}]})

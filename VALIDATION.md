@@ -1,5 +1,11 @@
 # Validation — 0.3.4
 
+## Unreleased installer fallback — 2026-10-07
+
+- All 102 Python tests pass. New coverage reproduces refusal of a normal launcher symlink, verifies manual instructions for missing/denied/untrusted launchers and each dependency group, rejects unknown groups before launch, preserves the successful verified launch route, and verifies cleanup/error propagation after collection failure.
+- Runtime QML checks with a synthetic backend verify disabled installation buttons for every group, selectable manual commands, the guarded KDE Connect installation shortcut, continued access to an installed KDE Connect app, and restoration of normal controls when the launcher is available. A direct guarded UI request starts no backend action. The Desktop setup page was visually checked with dark and light palettes in an isolated Quickshell instance; the installed plugin and desktop configuration were not changed.
+- QML lint, Omarchy manifest validation, and whitespace checks pass. No packages were installed and no launcher aliases were accepted. Actual OmarchyMac launcher compatibility still awaits its target/ownership details and physical-system confirmation; issue #2 remains open. This is not a published release or marketplace approval.
+
 ## Unreleased ADB readiness fix — 2026-10-07
 
 - All 97 Python tests pass. Coverage includes missing ADB, successful startup, protobuf and other shared-library failures, generic failure, deadline failure, and suppression of device enumeration and discovery after a failed probe.
