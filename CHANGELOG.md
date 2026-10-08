@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.5 - 2026-09-15
+
+- Expand Help > About with maintainer, AI-assistance, and upstream license credits.
+- Add website, GitHub, X, and optional Buy Me a Coffee links. Links open only on a click in the external browser.
+- Preserve phone pairing, connection settings, and mirroring behavior.
+
 ## 0.3.4 — 2026-09-13
 
 - Explain how to pair over Wi-Fi when Android displays a Tailscale or other VPN address, including returning to the VPN after pairing. Shared-range addresses remain unsupported and now get actionable guidance.

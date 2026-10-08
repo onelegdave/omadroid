@@ -8,7 +8,7 @@ No root, paid service, Samsung account, or additional Android mirroring app is r
 
 ![OmaDroid mirroring an Android display beside its live phone controls](preview.png)
 
-[More screenshots](docs/screenshots.md) · [Release v0.3.4](https://github.com/onelegdave/omadroid/releases/tag/v0.3.4) · [Security and privacy](SECURITY.md)
+[More screenshots](docs/screenshots.md) · [Release v0.3.5](https://github.com/onelegdave/omadroid/releases/tag/v0.3.5) · [Security and privacy](SECURITY.md)
 
 ## Install
 
@@ -20,7 +20,7 @@ omarchy plugin add https://github.com/onelegdave/omadroid --enable
 
 Open the phone icon in the bar and follow **Connect → Desktop → Phone → Pair → Ready**. OmaDroid offers explicit Install buttons for missing desktop tools. Android debugging authorization is required; KDE Connect alone cannot mirror the phone.
 
-The command installs the current upstream branch. For the numbered release, download and extract `omadroid-v0.3.4.tar.gz` from [Releases](https://github.com/onelegdave/omadroid/releases/tag/v0.3.4), review its source, and use the local installer below. Checksums are included with the release.
+The command installs the current upstream branch. For the numbered release, download and extract `omadroid-v0.3.5.tar.gz` from [Releases](https://github.com/onelegdave/omadroid/releases/tag/v0.3.5), review its source, and use the local installer below. Checksums are included with the release.
 
 ## Requirements
 
@@ -106,7 +106,7 @@ OmaDroid follows Omarchy’s live palette and popup surface colors. Status accen
 
 ## Troubleshooting and privacy
 
-OmaDroid has no telemetry, advertising, cloud relay, automatic update check, or crash upload. Runtime phone endpoints are restricted to private local-network addresses; public Internet endpoints and remote ADB-server overrides are not supported. Package downloads happen only after you choose an Install button. The OneLegDave credit in Help opens the author's website in your browser only when clicked; it adds no tracking parameters or phone data. Automatic clipboard sharing is disabled; left Alt+V explicitly pastes the computer clipboard into the phone. See [SECURITY.md](SECURITY.md) for the command/network inventory, review fixes, and audit limits.
+OmaDroid has no telemetry, advertising, cloud relay, automatic update check, or crash upload. Runtime phone endpoints are restricted to private local-network addresses; public Internet endpoints and remote ADB-server overrides are not supported. Package downloads happen only after you choose an Install button. About links in Help open the author's profiles, project and license pages, or optional support page in your browser only when clicked; they add no tracking parameters or phone data. Automatic clipboard sharing is disabled; left Alt+V explicitly pastes the computer clipboard into the phone. See [SECURITY.md](SECURITY.md) for the command/network inventory, review fixes, and audit limits.
 
 The panel shows pairing/connection failures and USB authorization states. Later scrcpy failures generate a desktop notification. Per-session logs are under `~/.cache/phone-mirror`; saved connection addresses and confirmed device/connection identities are under `~/.local/state/phone-mirror` (both respect XDG overrides). New files are private to your user. Pairing codes are passed through standard input, cleared from the panel, and never saved or included in process command lines. Mirroring does not record video to disk.
 
@@ -139,10 +139,16 @@ Upstream documentation: [scrcpy](https://github.com/Genymobile/scrcpy), [Android
 
 ## AI assistance
 
-AI tools were used to assist work on this project, including development and documentation. AI assistance is acknowledged here; authorship and maintenance remain with the human project contributors.
+Codex assisted with development and documentation on this project, alongside other AI tools at various points. OneLegDave remains the human owner and maintainer.
+
+## About
+
+Created and maintained by [OneLegDave](https://www.onelegdave.dev/) ([GitHub](https://github.com/onelegdave), [X](https://x.com/OneLegDavePDX)). Repository: [github.com/onelegdave/omadroid](https://github.com/onelegdave/omadroid).
+
+## Support my work
+
+I build OmaDroid as a free, open-source project. If you find it useful, you can [buy me a coffee](https://buymeacoffee.com/onelegdave). Contributions are entirely optional and never required to use any feature.
 
 ## License
 
-Created and maintained by [OneLegDave](https://www.onelegdave.dev/).
-
-MIT, copyright OneLegDave. Dependencies retain their own licenses.
+OmaDroid is [MIT licensed](https://github.com/onelegdave/omadroid/blob/main/LICENSE), copyright OneLegDave. It depends on separate upstream projects under their own licenses: [scrcpy](https://github.com/Genymobile/scrcpy/blob/master/LICENSE), the [Android Open Source Project](https://source.android.com/setup/start/licenses) (ADB/platform-tools), and [KDE Connect](https://invent.kde.org/network/kdeconnect-kde/-/blob/master/COPYING).

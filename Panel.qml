@@ -22,6 +22,7 @@ Panel {
     readonly property color success: accent
     readonly property color accentInk: contrast(ink, accent) >= contrast(colors.background, accent) ? ink : colors.background
     readonly property var shellHost: bar
+    readonly property string coffeeUrl: "https://buymeacoffee.com/onelegdave"
     readonly property string backend: localFile("phone_mirror.py")
     readonly property var backendEnvironment: {
         const env = {
@@ -277,7 +278,7 @@ Panel {
         }
         function status(): string {
             return JSON.stringify({
-                version: "0.3.4",
+                version: "0.3.5",
                 name: "OmaDroid",
                 theme: {
                     background: root.colors.background.toString(),
@@ -1237,7 +1238,7 @@ Panel {
                             width: parent.width
                             Label {
                                 width: parent.width
-                                text: "OmaDroid · 0.3.4"
+                                text: "About OmaDroid · 0.3.5"
                                 font.bold: true
                             }
                             Label {
@@ -1246,10 +1247,81 @@ Panel {
                                 color: root.muted
                                 font.pixelSize: root.fontStyle.bodySmall
                             }
+                            Label {
+                                width: parent.width
+                                text: "Created and maintained by OneLegDave, with AI assistance from Codex on development and documentation. OneLegDave is the human owner and maintainer."
+                                color: root.muted
+                                font.pixelSize: root.fontStyle.bodySmall
+                            }
+                            Label {
+                                width: parent.width
+                                text: "OmaDroid is MIT licensed. scrcpy, ADB (Android platform tools), and KDE Connect are separate upstream projects under their own licenses; see the links below."
+                                color: root.muted
+                                font.pixelSize: root.fontStyle.bodySmall
+                            }
+                            Flow {
+                                width: parent.width
+                                spacing: Style.space(8)
+                                ActionButton {
+                                    text: "OneLegDave ↗"
+                                    helpText: "Open www.onelegdave.dev in your browser"
+                                    onClicked: Qt.openUrlExternally("https://www.onelegdave.dev/")
+                                }
+                                ActionButton {
+                                    text: "GitHub ↗"
+                                    helpText: "Open the OneLegDave GitHub profile in your browser"
+                                    onClicked: Qt.openUrlExternally("https://github.com/onelegdave")
+                                }
+                                ActionButton {
+                                    text: "Repository ↗"
+                                    helpText: "Open the OmaDroid repository in your browser"
+                                    onClicked: Qt.openUrlExternally("https://github.com/onelegdave/omadroid")
+                                }
+                                ActionButton {
+                                    text: "X ↗"
+                                    helpText: "Open @OneLegDavePDX on X in your browser"
+                                    onClicked: Qt.openUrlExternally("https://x.com/OneLegDavePDX")
+                                }
+                                ActionButton {
+                                    text: "OmaDroid license ↗"
+                                    helpText: "Open the OmaDroid MIT license in your browser"
+                                    onClicked: Qt.openUrlExternally("https://github.com/onelegdave/omadroid/blob/main/LICENSE")
+                                }
+                                ActionButton {
+                                    text: "scrcpy license ↗"
+                                    helpText: "Open the scrcpy project license in your browser"
+                                    onClicked: Qt.openUrlExternally("https://github.com/Genymobile/scrcpy/blob/master/LICENSE")
+                                }
+                                ActionButton {
+                                    text: "Android platform license ↗"
+                                    helpText: "Open the Android Open Source Project license page in your browser"
+                                    onClicked: Qt.openUrlExternally("https://source.android.com/setup/start/licenses")
+                                }
+                                ActionButton {
+                                    text: "KDE Connect license ↗"
+                                    helpText: "Open the KDE Connect project license in your browser"
+                                    onClicked: Qt.openUrlExternally("https://invent.kde.org/network/kdeconnect-kde/-/blob/master/COPYING")
+                                }
+                            }
+                        }
+                        Card {
+                            width: parent.width
+                            visible: root.coffeeUrl !== ""
+                            Label {
+                                width: parent.width
+                                text: "Support OmaDroid"
+                                font.bold: true
+                            }
+                            Label {
+                                width: parent.width
+                                text: "If OmaDroid saved you some hassle, I'd welcome a one-time coffee. It's entirely optional and never unlocks anything."
+                                color: root.muted
+                                font.pixelSize: root.fontStyle.bodySmall
+                            }
                             ActionButton {
-                                text: "OneLegDave ↗"
-                                helpText: "Open www.onelegdave.dev in your browser"
-                                onClicked: Qt.openUrlExternally("https://www.onelegdave.dev/")
+                                text: "Buy me a coffee ↗"
+                                helpText: "Open the OmaDroid support link in your browser"
+                                onClicked: Qt.openUrlExternally(root.coffeeUrl)
                             }
                         }
                     }
