@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.6 — 2026-10-07
 
 - Disable unavailable desktop installation actions and show selectable manual commands for each missing tool group. Direct installer requests return useful guidance instead of a raw launcher error. Launcher symlink rejection remains intact; the OmarchyMac layout investigation in [#2](https://github.com/onelegdave/omadroid/issues/2) remains open.
 - Check that ADB can start before marking the desktop ready, keeping setup available when a system library is missing. Thanks to [@HermeticOrmus](https://github.com/HermeticOrmus) for [#1](https://github.com/onelegdave/omadroid/pull/1).

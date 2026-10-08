@@ -1,17 +1,17 @@
-# Validation — 0.3.4
+# Validation — 0.3.6
 
-## Unreleased installer fallback — 2026-10-07
+## 0.3.6 installer fallback — 2026-10-07
 
 - All 102 Python tests pass. New coverage reproduces refusal of a normal launcher symlink, verifies manual instructions for missing/denied/untrusted launchers and each dependency group, rejects unknown groups before launch, preserves the successful verified launch route, and verifies cleanup/error propagation after collection failure.
 - Runtime QML checks with a synthetic backend verify disabled installation buttons for every group, selectable manual commands, the guarded KDE Connect installation shortcut, continued access to an installed KDE Connect app, and restoration of normal controls when the launcher is available. A direct guarded UI request starts no backend action. The Desktop setup page was visually checked with dark and light palettes in an isolated Quickshell instance; the installed plugin and desktop configuration were not changed.
-- QML lint, Omarchy manifest validation, and whitespace checks pass. No packages were installed and no launcher aliases were accepted. Actual OmarchyMac launcher compatibility still awaits its target/ownership details and physical-system confirmation; issue #2 remains open. This is not a published release or marketplace approval.
+- QML lint, Omarchy manifest validation, and whitespace checks pass. No packages were installed and no launcher aliases were accepted. Actual OmarchyMac launcher compatibility still awaits its target/ownership details and physical-system confirmation; issue #2 remains open. These checks do not constitute marketplace approval.
 
-## Unreleased ADB readiness fix — 2026-10-07
+## 0.3.6 ADB readiness fix — 2026-10-07
 
 - All 97 Python tests pass. Coverage includes missing ADB, successful startup, protobuf and other shared-library failures, generic failure, deadline failure, and suppression of device enumeration and discovery after a failed probe.
 - QML lint, Omarchy manifest validation, and whitespace checks pass. The real system ADB succeeds through the verified executable runner with `adb version`.
 - The probe uses the existing command/environment/output/cleanup protections with a five-second deadline. No launcher symlink handling, package installation behavior, or phone endpoint policy changed.
-- Broken-library behavior uses isolated fixtures. No new physical-phone pairing or OmarchyMac launcher verification was performed; the separate launcher issue remains open. This is not a published release or marketplace approval.
+- Broken-library behavior uses isolated fixtures. No new physical-phone pairing or OmarchyMac launcher verification was performed; the separate launcher issue remains open. These checks do not constitute marketplace approval.
 
 Verification for 0.3.4 on 2026-09-13:
 
