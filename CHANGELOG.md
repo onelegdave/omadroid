@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Check that ADB can start before marking the desktop ready, keeping setup available when a system library is missing. Thanks to [@HermeticOrmus](https://github.com/HermeticOrmus) for [#1](https://github.com/onelegdave/omadroid/pull/1).
+- Recommend a full system update for shared-library failures, and skip device enumeration and wireless discovery when ADB cannot start.
+
 ## 0.3.5 - 2026-09-15
 
 - Expand Help > About with maintainer, AI-assistance, and upstream license credits.

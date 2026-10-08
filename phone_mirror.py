@@ -439,7 +439,8 @@ def adb_can_start():
     if "shared libraries" in text or "libprotobuf" in text:
         return False, (
             "adb is installed but cannot start because a system library is missing or too old. "
-            "Upgrade protobuf so it matches android-tools, then reopen this panel.\n" + text
+            "Complete a full system update using your distribution's supported updater, "
+            "then refresh this panel. Avoid upgrading individual libraries on their own.\n" + text
         )
     return False, text
 

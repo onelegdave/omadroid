@@ -53,6 +53,8 @@ Opening a terminal or KDE Connect is an explicit user action and creates a separ
 
 ## Validation and limits
 
+The unreleased ADB readiness fix probes the existing verified `adb` executable with `version` before enabling device enumeration and wireless discovery. The probe uses the existing controlled environment, output caps, process-group cleanup, and a five-second deadline. Failure keeps desktop setup available and makes no device or discovery request. This adds no executable, endpoint, privilege, or symlink exception. Shared-library errors recommend the distribution's supported full system update; no update runs automatically.
+
 The audit includes hostile filesystem fixtures, PATH/environment poisoning, executable replacement after verification, output flooding, timeout/descendant cleanup, session log overflow, pairing-code handling, public endpoint rejection, and functional session tests. See [VALIDATION.md](VALIDATION.md) for the final count and live checks.
 
 A syscall tracer followed the backend and its child helpers during a real status refresh and a real mirror session. Observed `connect`/`sendto` destinations were Unix sockets and `127.0.0.1:5037`; no direct Internet destination appeared. The real phone display opened, and Stop closed it. The original disconnected state and reconnect preferences were restored. The dependency terminal was tested with a harmless environment probe, not a package installation.

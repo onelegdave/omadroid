@@ -1,5 +1,12 @@
 # Validation — 0.3.4
 
+## Unreleased ADB readiness fix — 2026-10-07
+
+- All 97 Python tests pass. Coverage includes missing ADB, successful startup, protobuf and other shared-library failures, generic failure, deadline failure, and suppression of device enumeration and discovery after a failed probe.
+- QML lint, Omarchy manifest validation, and whitespace checks pass. The real system ADB succeeds through the verified executable runner with `adb version`.
+- The probe uses the existing command/environment/output/cleanup protections with a five-second deadline. No launcher symlink handling, package installation behavior, or phone endpoint policy changed.
+- Broken-library behavior uses isolated fixtures. No new physical-phone pairing or OmarchyMac launcher verification was performed; the separate launcher issue remains open. This is not a published release or marketplace approval.
+
 Verification for 0.3.4 on 2026-09-13:
 
 - All 93 Python tests pass, including shared-range address rejection before any ADB call, actionable VPN guidance, preserving a paused profile after connection failure, successful reconnection without pairing, and a real isolated ADB daemon startup test. The daemon test uses a separate port/key store, disables network-phone discovery, selects a nonexistent USB device, and cleans up its own daemon.

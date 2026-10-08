@@ -47,24 +47,69 @@ PERMISSIONS no permissions (user in plugdev group; are your udev rules wrong?)
         self.assertEqual([d["state"] for d in devices[3:]], ["unauthorized", "offline", "no permissions"])
 
     def test_unrunnable_adb_is_not_ready(self):
-        broken = subprocess.CompletedProcess(
-            ["adb", "version"], 127, "",
-            "/usr/bin/adb: error while loading shared libraries: libprotobuf.so.36.1.0: cannot open shared object file",
-        )
+        for library in ("libprotobuf.so.36.1.0", "libusb-1.0.so.0"):
+            with self.subTest(library=library):
+                broken = subprocess.CompletedProcess(
+                    ["adb", "version"], 127, "",
+                    "/usr/bin/adb: error while loading shared libraries: " + library + ": cannot open shared object file",
+                )
+                with patch.object(phone.commands, "available", side_effect=lambda name: name in ("adb", "scrcpy")), \
+                     patch.object(phone, "run", return_value=broken) as run, \
+                     patch.object(phone, "checked") as devices, \
+                     patch.object(phone, "discover") as discovery, \
+                     patch.object(phone, "kde_devices", return_value={"devices": [], "error": ""}):
+                    result = phone.status()
+                self.assertFalse(result["dependencies"]["adb"])
+                self.assertTrue(result["dependencies"]["scrcpy"])
+                self.assertEqual(result["devices"], [])
+                self.assertEqual(result["services"], [])
+                self.assertIn(library, result["errors"][0])
+                self.assertIn("full system update", result["errors"][0])
+                self.assertNotIn("Upgrade protobuf", result["errors"][0])
+                run.assert_called_once_with(["adb", "version"], timeout=5)
+                devices.assert_not_called()
+                discovery.assert_not_called()
 
-        def fake_run(args, timeout=8, input=None):
-            if args[:2] == ["adb", "version"]:
-                return broken
-            return subprocess.CompletedProcess(args, 0, "", "")
+    def test_missing_adb_is_not_probed(self):
+        with patch.object(phone.commands, "available", return_value=False), \
+             patch.object(phone, "run") as run:
+            self.assertEqual(phone.adb_can_start(), (False, None))
+        run.assert_not_called()
 
-        with patch.object(phone.commands, "available", side_effect=lambda name: name != "kdeconnect-cli"), \
-             patch.object(phone, "run", side_effect=fake_run), \
-             patch.object(phone, "kde_devices", return_value={"devices": [], "error": ""}), \
-             patch.object(phone, "saved", return_value=[]):
+    def test_status_enumerates_devices_after_successful_adb_probe(self):
+        version = subprocess.CompletedProcess(["adb", "version"], 0, "Android Debug Bridge version 1.0.41", "")
+        with patch.object(phone.commands, "available", side_effect=lambda name: name in ("adb", "scrcpy")), \
+             patch.object(phone, "run", return_value=version) as run, \
+             patch.object(phone, "checked", return_value="List of devices attached\n") as devices, \
+             patch.object(phone, "discover", return_value=[]) as discovery, \
+             patch.object(phone, "kde_devices", return_value={"devices": [], "error": ""}):
             result = phone.status()
-        self.assertFalse(result["dependencies"]["adb"])
-        self.assertTrue(any("libprotobuf" in error for error in result["errors"]))
-        self.assertEqual(result["devices"], [])
+        self.assertTrue(result["dependencies"]["adb"])
+        self.assertEqual(result["errors"], [])
+        run.assert_called_once_with(["adb", "version"], timeout=5)
+        devices.assert_called_once_with(["adb", "devices", "-l"])
+        discovery.assert_called_once_with()
+
+    def test_adb_probe_failure_or_deadline_skips_device_and_discovery_calls(self):
+        failures = (
+            subprocess.CompletedProcess(["adb", "version"], 1, "", "adb cannot start"),
+            phone.UserError("adb: Command exceeded its deadline"),
+        )
+        for failure in failures:
+            with self.subTest(failure=str(failure)):
+                with patch.object(phone.commands, "available", side_effect=lambda name: name in ("adb", "scrcpy")), \
+                     patch.object(phone, "run", **({"side_effect": failure} if isinstance(failure, Exception) else {"return_value": failure})), \
+                     patch.object(phone, "checked") as devices, \
+                     patch.object(phone, "discover") as discovery, \
+                     patch.object(phone, "kde_devices", return_value={"devices": [], "error": ""}):
+                    result = phone.status()
+                self.assertFalse(result["dependencies"]["adb"])
+                self.assertTrue(result["errors"])
+                self.assertNotIn("full system update", result["errors"][0])
+                self.assertEqual(result["devices"], [])
+                self.assertEqual(result["services"], [])
+                devices.assert_not_called()
+                discovery.assert_not_called()
 
     def test_mdns_keeps_pairing_and_connection_ports_separate(self):
         output = """List of discovered mdns services
