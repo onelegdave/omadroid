@@ -1,5 +1,7 @@
 # OmaDroid screenshots
 
+Version 0.3.7 retains the existing preview and gallery: the destination-resolution fix changes no screen layout. The captures retain their original version provenance below.
+
 Captures of the actual OmaDroid interface. The 0.3.6 setup captures use an isolated Quickshell instance with synthetic dependency status; the older gallery was captured in Omarchy Shell. The original gallery shows 0.3.1; the VPN pairing guidance below shows 0.3.4. The plugin uses the installed Omarchy palette, fonts, and corner settings. Long pages scroll.
 
 ## Manual desktop setup — 0.3.6 marketplace preview

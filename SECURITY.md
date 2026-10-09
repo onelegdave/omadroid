@@ -1,6 +1,21 @@
 # OmaDroid security and network behavior
 
-Review target: OmaDroid 0.3.6, 2026-10-07. Version 0.3.6 checks ADB startup before declaring desktop readiness and provides manual setup guidance when the verified installation launcher is unavailable. Executable verification, launcher symlink rejection, permissions, and the phone endpoint allowlist are unchanged. This describes the source shipped in this folder and the installed distro tools tested on the development desktop.
+Review target: OmaDroid 0.3.7, 2026-10-08. This release constrains ADB destination resolution as described below. The 0.3.6 startup and manual installation guidance remains available; executable verification, launcher symlink rejection, permissions, and the phone endpoint allowlist are unchanged.
+
+## 0.3.7: constrain ADB destination resolution
+
+The submitted 0.3.6 source at `7641aed8c8e0b5e654f2cb71778eaabe40a7e405` validates numeric phone endpoints, but passes them to ADB unchanged. In an mDNS-capable ADB server, this permits a matching instance name to substitute the advertised destination. This is a destination-policy bypass before authentication; it does not demonstrate successful pairing, phone authorization, or disclosure of the pairing code.
+
+Pinned AOSP source at `1cf2f017d312f73b3dc53bda85ef2610e35a80e9` establishes the path:
+
+- [The mDNS name parser](https://android.googlesource.com/platform/packages/modules/adb/+/1cf2f017d312f73b3dc53bda85ef2610e35a80e9/client/mdns_utils.cpp) treats numeric `IP:port` input without a service suffix as a bare instance name. [Service lookup](https://android.googlesource.com/platform/packages/modules/adb/+/1cf2f017d312f73b3dc53bda85ef2610e35a80e9/client/transport_mdns.cpp) searches the server's registry by that name without a destination-range check.
+- [Pairing](https://android.googlesource.com/platform/packages/modules/adb/+/1cf2f017d312f73b3dc53bda85ef2610e35a80e9/client/adb_wifi.cpp) tries that lookup before parsing a literal address and passes the advertised address/port to the pairing client. [The pairing client](https://android.googlesource.com/platform/packages/modules/adb/+/1cf2f017d312f73b3dc53bda85ef2610e35a80e9/client/pairing/pairing_client.cpp) opens TCP before starting the authenticated pairing protocol.
+- [TCP connect](https://android.googlesource.com/platform/packages/modules/adb/+/1cf2f017d312f73b3dc53bda85ef2610e35a80e9/socket_spec.cpp) also tries mDNS lookup before dialing a non-loopback literal destination.
+- [Daemon initialization](https://android.googlesource.com/platform/packages/modules/adb/+/1cf2f017d312f73b3dc53bda85ef2610e35a80e9/client/main.cpp) reads `ADB_MDNS` at startup. [Server status](https://android.googlesource.com/platform/packages/modules/adb/+/1cf2f017d312f73b3dc53bda85ef2610e35a80e9/adb.cpp) reports `mdns_enabled` from the daemon's environment. Changing a subsequent client's environment cannot disable an already-running daemon's registry.
+
+The fix pins `ADB_MDNS=0` and `ADB_MDNS_AUTO_CONNECT=0` in the existing clean helper environment. Every Pair/Connect also obtains `adb server-status` through the verified, bounded runner and requires exactly one explicit `mdns_enabled: false` field with successful command status before submitting the endpoint or code. Enabled, missing, failed, or ambiguous status fails closed with manual recovery guidance. No daemon is stopped or restarted automatically, no new listener or executable is added, and pairing codes remain stdin-only. Older ADB versions that cannot report the setting must be updated before wireless pairing/connection. Avahi supplies validated discovery when native ADB discovery returns an empty list or fails.
+
+This constrains OmaDroid's Pair/Connect requests under the existing trusted-local-daemon assumption. It does not stop independent activity by a pre-existing mDNS-enabled server, constrain other applications, sandbox OS routing, or protect against same-user replacement of the trusted daemon between requests. See [VALIDATION.md](VALIDATION.md) for synthetic evidence and remaining live checks. Publication of this release does not constitute marketplace approval.
 
 ## No phone-home functionality
 

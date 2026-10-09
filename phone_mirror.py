@@ -123,16 +123,20 @@ def parse_avahi(output, kind):
 
 def discover():
     try:
-        return parse_services(checked(["adb", "mdns", "services"]))
+        services = parse_services(checked(["adb", "mdns", "services"]))
+        if services:
+            return services
     except UserError:
-        # Some distributions compile ADB without mDNS; Avahi provides the same
-        # discovery without enabling or changing any ADB network listener.
-        if not commands.available("avahi-browse"):
-            raise UserError("Automatic discovery is unavailable. Enter the address shown on your phone.") from None
-        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
-            jobs = {kind: pool.submit(checked, ["avahi-browse", "--parsable", "--resolve", "--terminate", service], 5)
-                    for kind, service in (("pair", "_adb-tls-pairing._tcp"), ("connect", "_adb-tls-connect._tcp"))}
-            return [item for kind, job in jobs.items() for item in parse_avahi(job.result(), kind)]
+        pass
+    # Disabled ADB discovery can return an empty successful response. Avahi
+    # resolves advertisements for our validator without populating ADB's mDNS
+    # registry or enabling its automatic connections.
+    if not commands.available("avahi-browse"):
+        raise UserError("Automatic discovery is unavailable. Enter the address shown on your phone.") from None
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+        jobs = {kind: pool.submit(checked, ["avahi-browse", "--parsable", "--resolve", "--terminate", service], 5)
+                for kind, service in (("pair", "_adb-tls-pairing._tcp"), ("connect", "_adb-tls-connect._tcp"))}
+        return [item for kind, job in jobs.items() for item in parse_avahi(job.result(), kind)]
 
 
 def bus(path, interface, method, *args):

@@ -30,6 +30,9 @@ class ProcessSecurityTests(unittest.TestCase):
                     self.assertEqual(result.returncode, 0, result.stderr)
                     result = commands.run(['adb', 'devices'])
                     self.assertIn('List of devices attached', result.stdout)
+                    status = commands.run(['adb', 'server-status'])
+                    self.assertEqual(status.returncode, 0, status.stderr)
+                    self.assertIn('mdns_enabled: false', status.stdout.splitlines())
                     with socket.create_connection(('127.0.0.1', port), timeout=2):
                         pass
                 finally:
@@ -39,7 +42,7 @@ class ProcessSecurityTests(unittest.TestCase):
         with commands.launch('python3',['-I','-c',code]) as process:
             return commands.collect(process,[],timeout,**limits)
     def test_environment_blocks_injection_routing_and_phone_home_overrides(self):
-        poisoned={'PATH':'/untrusted','PYTHONPATH':'/bad','LD_PRELOAD':'/bad','ADB_SERVER_SOCKET':'tcp:8.8.8.8:5037','ADB':'/bad','SCRCPY_SERVER_PATH':'/bad','HTTPS_PROXY':'http://example.com','BASH_ENV':'/bad','DBUS_SESSION_BUS_ADDRESS':'tcp:host=8.8.8.8,port=1234'}
+        poisoned={'PATH':'/untrusted','PYTHONPATH':'/bad','LD_PRELOAD':'/bad','ADB_SERVER_SOCKET':'tcp:8.8.8.8:5037','ADB_MDNS':'1','ADB_MDNS_AUTO_CONNECT':'adb-tls-connect','ADB':'/bad','SCRCPY_SERVER_PATH':'/bad','HTTPS_PROXY':'http://example.com','BASH_ENV':'/bad','DBUS_SESSION_BUS_ADDRESS':'tcp:host=8.8.8.8,port=1234'}
         # Python starts before environment mocking to avoid test harness loader effects.
         with patch.dict(os.environ,poisoned):
             env=commands.tool_environment()
@@ -48,6 +51,8 @@ class ProcessSecurityTests(unittest.TestCase):
         self.assertEqual(child,env)
         self.assertEqual(child['PATH'],'/usr/bin')
         self.assertEqual(child['ADB_SERVER_SOCKET'],'tcp:localhost:5037')
+        self.assertEqual(child['ADB_MDNS'],'0')
+        self.assertEqual(child['ADB_MDNS_AUTO_CONNECT'],'0')
         self.assertEqual(child['ADB'],'/usr/bin/adb')
         for key in ('PYTHONPATH','LD_PRELOAD','HTTPS_PROXY','BASH_ENV'):
             self.assertNotIn(key,child)

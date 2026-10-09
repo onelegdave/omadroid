@@ -29,6 +29,10 @@ def tool_environment():
            # ADB recognizes the literal "localhost" spelling as local and can
            # start its daemon. A numeric loopback host is treated as remote.
            'ADB_SERVER_SOCKET': 'tcp:localhost:5037', 'ADB': '/usr/bin/adb',
+           # Numeric phone endpoints can otherwise be reinterpreted as mDNS
+           # instance names. This affects newly started servers only; run()
+           # also checks the actual server before pairing or connecting.
+           'ADB_MDNS': '0', 'ADB_MDNS_AUTO_CONNECT': '0',
            'SCRCPY_SERVER_PATH': '/usr/share/scrcpy/scrcpy-server'}
     # XDG file locations are validated separately by the nofollow storage layer.
     for name in ('XDG_CONFIG_HOME', 'XDG_STATE_HOME', 'XDG_CACHE_HOME'):
@@ -194,5 +198,15 @@ def collect(process, args, timeout, input=None, stdout_limit=STDOUT_LIMIT, stder
 
 
 def run(args, timeout=8, input=None):
+    if len(args) > 1 and args[0] == 'adb' and args[1] in ('pair', 'connect'):
+        # Resolution happens in the long-lived server, not this client. An
+        # environment override alone cannot constrain an existing daemon.
+        status = run(['adb', 'server-status'], timeout=5)
+        fields = [line for line in status.stdout.splitlines() if line.startswith('mdns_enabled:')]
+        if status.returncode or fields != ['mdns_enabled: false']:
+            raise ToolError('Wireless pairing and connection require an ADB server with mDNS disabled. '
+                            'Close ADB sessions and restart ADB manually with ADB_MDNS=0, then retry. '
+                            'If server-status cannot report this setting, update android-tools. '
+                            'OmaDroid has not stopped the running server.')
     with launch(args[0], args[1:], input=input is not None) as process:
         return collect(process, args, timeout, input)

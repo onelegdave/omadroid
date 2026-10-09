@@ -1,4 +1,14 @@
-# Validation — 0.3.6
+# Validation — 0.3.7
+
+## 0.3.7 ADB destination correction — 2026-10-08
+
+- The initial worktree was clean and exactly matched submitted commit `7641aed8c8e0b5e654f2cb71778eaabe40a7e405`. Upstream source inspection at pinned AOSP commit `1cf2f017d312f73b3dc53bda85ef2610e35a80e9` confirms service-first resolution of numeric endpoints before TCP/authentication; links and scope are in [SECURITY.md](SECURITY.md).
+- An offline harness compiled the upstream mDNS parser and confirmed numeric IPv4/IPv6 endpoints are parsed as instance names. Nine synthetic regression tests cover public/loopback substitution, enabled or unverified daemon refusal before address/code submission, literal endpoints versus service names, validated discovery, and pairing confidentiality. They open no network sockets.
+- An isolated real ADB startup check confirmed `mdns_enabled: false`. The desktop's previous daemon reported `LIBADBMDNS` with mDNS enabled; a disabled daemon's "unsupported" discovery response does not mean the build lacks mDNS.
+- All 111 Python tests pass. QML lint, Omarchy manifest validation, and whitespace checks pass. Existing executable verification, bounded process cleanup, storage, address-policy, and pairing-confidentiality coverage remains green.
+- A local working-tree text preflight used the marketplace's unchanged deterministic analysis modules at `053286f39edebca10d875f4cea8c4b744bd44a2c` (baseline version 3), with source selection matching its text scope and the manifest entry point. It reported zero findings, the existing privilege/package-manager/service-management/installer capabilities, `review-required`, and `blocksApproval: false`. Analysis ran offline with network access disabled and did not execute plugin code. This is local preparation, not a complete remote exact-commit scan, bot validation, or maintainer approval.
+- With user authorization, the fixed checkout was installed cleanly and the desktop ADB daemon restarted with mDNS disabled. Runtime files matched the checkout, the plugin loaded without error, and Avahi discovered a previously unpaired Android 16 phone. The user confirmed fresh pairing, mirroring/controls, audio, folding/rotation, manual reconnect, and reconnect after phone reboot once Wireless debugging was re-enabled. No pairing codes, phone endpoints, identifiers, or captured phone content are retained in source.
+- No real mDNS substitution experiment was performed. Older ADB recovery, USB, and desktop-reboot recovery remain unverified; broader device testing was stopped to keep this work focused. These checks do not constitute marketplace security approval.
 
 ## 0.3.6 installer fallback — 2026-10-07
 

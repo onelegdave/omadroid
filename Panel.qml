@@ -295,7 +295,7 @@ Panel {
         }
         function status(): string {
             return JSON.stringify({
-                version: "0.3.6",
+                version: "0.3.7",
                 name: "OmaDroid",
                 theme: {
                     background: root.colors.background.toString(),
@@ -1267,7 +1267,7 @@ Panel {
                             width: parent.width
                             Label {
                                 width: parent.width
-                                text: "About OmaDroid · 0.3.6"
+                                text: "About OmaDroid · 0.3.7"
                                 font.bold: true
                             }
                             Label {

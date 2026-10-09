@@ -8,7 +8,7 @@ No root, paid service, Samsung account, or additional Android mirroring app is r
 
 ![OmaDroid desktop setup with manual installation guidance](preview.png)
 
-[More screenshots](docs/screenshots.md) · [Release v0.3.6](https://github.com/onelegdave/omadroid/releases/tag/v0.3.6) · [Security and privacy](SECURITY.md)
+[More screenshots](docs/screenshots.md) · [Release v0.3.7](https://github.com/onelegdave/omadroid/releases/tag/v0.3.7) · [Security and privacy](SECURITY.md)
 
 ## Install
 
@@ -20,12 +20,12 @@ omarchy plugin add https://github.com/onelegdave/omadroid --enable
 
 Open the phone icon in the bar and follow **Connect → Desktop → Phone → Pair → Ready**. OmaDroid offers explicit Install buttons for missing desktop tools. Android debugging authorization is required; KDE Connect alone cannot mirror the phone.
 
-The command installs the current upstream branch. For the numbered release, download and extract `omadroid-v0.3.6.tar.gz` from [Releases](https://github.com/onelegdave/omadroid/releases/tag/v0.3.6), review its source, and use the local installer below. Checksums are included with the release.
+The command installs the current upstream branch. For the numbered release, download and extract `omadroid-v0.3.7.tar.gz` from [Releases](https://github.com/onelegdave/omadroid/releases/tag/v0.3.7), review its source, and use the local installer below. Checksums are included with the release.
 
 ## Requirements
 
 - Omarchy with its Quickshell plugin system (`omarchy plugin --help`). Older Waybar-based versions are not supported.
-- Desktop: Python 3, scrcpy 3 or newer, android-tools (ADB), systemd's busctl (included in Omarchy). If ADB was built without mDNS, automatic discovery uses `avahi-browse` from the optional `avahi` package and a running Avahi daemon. Manual IP entry works without discovery.
+- Desktop: Python 3, scrcpy 3 or newer, android-tools (ADB), systemd's busctl (included in Omarchy). Wireless pairing/connection requires ADB's `server-status` to report `mdns_enabled: false`. Automatic discovery with ADB mDNS disabled uses `avahi-browse` from the optional `avahi` package and a running Avahi daemon. Manual IP entry works without discovery.
 - The default **Keep phone awake while mirroring** option requires scrcpy's `--keep-active` feature (verified with scrcpy 4.1). Older scrcpy versions can be used with this option disabled; the plugin reports how to resolve an unsupported option before launch.
 - Android 5+ for USB mirroring; Android 11+ for wireless pairing without a cable and for audio forwarding.
 - Optional KDE Connect on both the computer and phone. The KDE Plasma desktop is not required.
@@ -61,7 +61,7 @@ Click the phone icon, then **Connect**. The four-step guide covers **Desktop →
 4. The plugin automatically connects to the connection service advertised by that phone, including when ADB lacks native discovery. If necessary, return to the main **Wireless debugging** screen. If discovery is unavailable, enter its IP address and connection port under **Ready → Manual connection**. **The pairing port and connection port are different.**
 5. Click **Mirror** beside the ready device.
 
-ADB remembers authorization. The plugin remembers successfully used connection addresses. Addresses and ports can change: use current discovery or the address shown by the phone. Discovery uses ADB's mDNS and may be blocked by guest Wi-Fi, client isolation, VPN routing or a firewall. Manual addresses are supported, including `[IPv6]:port`. Wireless debugging may need to be enabled again after a reboot or network change. The plugin does not enable unauthenticated legacy TCP debugging or open firewall ports.
+ADB remembers authorization. The plugin remembers successfully used connection addresses. Addresses and ports can change: use current discovery or the address shown by the phone. Discovery reads local mDNS advertisements, using Avahi while ADB mDNS is disabled, and may be blocked by guest Wi-Fi, client isolation, VPN routing or a firewall. Manual addresses are supported, including `[IPv6]:port`. Wireless debugging may need to be enabled again after a reboot or network change. The plugin does not enable unauthenticated legacy TCP debugging or open firewall ports.
 
 The status card shows whether a mirror is active or a connection is ready, with the latest check age and connection-change time. Each identified phone has one ready/live card, with a summary of its Wi-Fi and USB connections. The custom Android name takes priority over the model name. KDE Connect has its own clearly labeled online/offline status. Disconnected remembered phones remain visible with a Connect button. Nearby phones have a Connect button directly in the mirroring list.
 
@@ -112,7 +112,9 @@ OmaDroid has no telemetry, advertising, cloud relay, automatic update check, or 
 
 The panel shows pairing/connection failures and USB authorization states. Later scrcpy failures generate a desktop notification. Per-session logs are under `~/.cache/phone-mirror`; saved connection addresses and confirmed device/connection identities are under `~/.local/state/phone-mirror` (both respect XDG overrides). New files are private to your user. Pairing codes are passed through standard input, cleared from the panel, and never saved or included in process command lines. Mirroring does not record video to disk.
 
-ADB authorization gives this computer debugging access to your phone; revoke it in Developer options when you no longer trust the computer. Disabling this plugin does not revoke ADB or KDE Connect pairing. ADB starts its standard local daemon when needed; no separate ADB startup service or manual `adb start-server` command is required.
+ADB authorization gives this computer debugging access to your phone; revoke it in Developer options when you no longer trust the computer. Disabling this plugin does not revoke ADB or KDE Connect pairing. ADB starts its standard local daemon when needed, with mDNS disabled. No separate ADB startup service is required.
+
+Wireless Pair and Connect check the running daemon before submitting the address or pairing code. ADB can reinterpret even numeric IP:port input as an mDNS service name, so a daemon with mDNS enabled is refused. OmaDroid does not stop an existing daemon. If this error appears, finish any ADB/mirror sessions, then manually run `/usr/bin/adb kill-server` followed by `ADB_MDNS=0 /usr/bin/adb start-server` and retry. This interrupts other ADB connections; saved pairing authorization remains available. If your ADB cannot report `mdns_enabled`, update android-tools using your distribution's supported updater. Use Avahi discovery or enter the phone's address manually while ADB mDNS is disabled.
 
 ```bash
 omarchy-shell onelegdave.omadroid open

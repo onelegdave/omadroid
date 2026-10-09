@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.7 — 2026-10-08
+
+- Prevent ADB mDNS from substituting an advertised destination for a validated numeric endpoint. Disable mDNS in the helper environment and require the running daemon to report mDNS disabled before Pair/Connect; otherwise refuse with manual recovery guidance.
+- Keep validated wireless discovery through Avahi. Preserve pairing-code confidentiality and the existing address/process protections.
+- Add focused offline destination and daemon-state regressions. Thanks to [@HANCORE-linux](https://github.com/HANCORE-linux) for reporting the resolver bypass during marketplace review.
+
 ## 0.3.6 — 2026-10-07
 
 - Disable unavailable desktop installation actions and show selectable manual commands for each missing tool group. Direct installer requests return useful guidance instead of a raw launcher error. Launcher symlink rejection remains intact; the OmarchyMac layout investigation in [#2](https://github.com/onelegdave/omadroid/issues/2) remains open.
