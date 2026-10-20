@@ -1,6 +1,26 @@
 # OmaDroid security and network behavior
 
-Review target: OmaDroid 0.3.7, 2026-10-08. This release constrains ADB destination resolution as described below. The 0.3.6 startup and manual installation guidance remains available; executable verification, launcher symlink rejection, permissions, and the phone endpoint allowlist are unchanged.
+Review target: OmaDroid 0.3.8, 2026-10-19. This release accepts a narrowly verified root-managed alias for the terminal launcher and corrects theme colors under Qt 6.12, as described below. The 0.3.7 ADB destination and mDNS-server checks, the 0.3.6 startup and manual installation guidance, permissions, and the phone endpoint allowlist are unchanged.
+
+## 0.3.8: verified terminal launcher alias
+
+[Issue #2](https://github.com/onelegdave/omadroid/issues/2) reported `[Errno 40] Too many levels of symbolic links: 'omarchy-launch-terminal'` on OmarchyMac 4.0.3. Through 0.3.7, the final `/usr/bin` component was opened with `O_NOFOLLOW`, so any launcher symlink failed with `ELOOP`, even a single root-managed link. The reporter has not yet supplied the link target or package ownership, so the exact layout is unconfirmed.
+
+Upstream sources show two relevant layouts. The official Omarchy package recipe installs each command as a regular file in `/usr/bin` and links `/usr/share/omarchy/bin` to it ([omarchy-pkgs `pkgbuilds/omarchy/PKGBUILD`](https://github.com/omacom/omarchy-pkgs/blob/61e6d13a3f4649efe22b930a3fed9ebb90293fcb/pkgbuilds/omarchy/PKGBUILD); the OmarchyMac 4.0.3rc4 release pins [the 4.0.3 recipe](https://github.com/omacom/omarchy-pkgs/blob/19ef4b560ffd6f26df67665400394278065cf437/pkgbuilds/omarchy/PKGBUILD)). That layout needs no alias. OmarchyMac's 3.x-to-Quattro upgrade instead keeps running from `~/.local/share/omarchy`, links `/usr/share/omarchy` to that checkout, and links each `/usr/bin/omarchy-*` command into it ([`omarchy-upgrade-to-quattro-mac` at v4.0.3rc4](https://github.com/omacom/omarchy-mac/blob/v4.0.3rc4/bin/omarchy-upgrade-to-quattro-mac#L245-L260)). That target is writable by the desktop user. OmaDroid does not treat a user-writable file as a system executable, so the reporter's case remains unsupported if it uses this layout.
+
+Only `omarchy-launch-terminal`, and only when it is verified as a script for the installer, may be an alias:
+
+- Each link must be root-owned and sit in a directory that has already been verified. Its target is resolved lexically, never with `realpath` or by following links. Every component of the resulting path is then reopened from `/` with `O_NOFOLLOW` and must be a root-owned real directory without group/other write, setuid, or setgid bits.
+- Each link must name `omarchy-launch-terminal`. At most four links are followed; longer chains, loops, dangling links, and links through symlinked directories are refused.
+- The final file must be a root-owned, non-writable regular executable that starts with `#!/bin/bash` and a newline. An ELF binary, another interpreter, or another file name reached through an alias is refused.
+- The script is opened once, and the installer runs that open descriptor through the separately verified `/usr/bin/bash` with `--noprofile --norc` and the fixed environment. Replacing a link or file after verification cannot change what runs. Output limits, deadline, process-group cleanup, and the manual-command fallback are unchanged.
+- No other tool gains alias support. The Python version alias rule is unchanged. A refused alias disables the installation buttons and shows the 0.3.6 manual commands; a direct request returns the same guidance without starting a process.
+
+This follows the existing trust model: root-managed system files are trusted; same-user files are not executed as system tools. It does not stop root from installing a malicious launcher, and it does not install or modify packages, launchers, or system links.
+
+## 0.3.8: theme colors under Qt 6.12
+
+Qt 6.12's QtQuick exports its own `Color` singleton. With unversioned imports it shadowed the Omarchy shell's `qs.Commons` `Color`, so the panel's theme colors were undefined. Panel.qml now imports `qs.Commons as Commons` and reads `Commons.Color`, as Omarchy 4.0.5's own shell does. This changes no command, permission, network, or storage behavior.
 
 ## 0.3.7: constrain ADB destination resolution
 
@@ -48,7 +68,7 @@ The audit used the actual [installer review](https://github.com/omacom/omarchy-p
 | Previous finding | OmaDroid control |
 | --- | --- |
 | Installer writes could follow symlinks or unsafe path components | `safe_files.py` opens directories by descriptor with `O_NOFOLLOW`, checks owners/types/modes, rejects hard-linked or writable files, bounds reads/backups, and replaces files atomically relative to validated directories. Source files receive the same checks. |
-| PATH lookup differed from executed file | `safe_process.py` has a fixed `/usr/bin` allowlist, verifies root-owned path components and executable format, then executes the opened inode through `/proc/self/fd`. The distro-owned Python version alias is validated; other executable symlinks are refused. |
+| PATH lookup differed from executed file | `safe_process.py` has a fixed `/usr/bin` allowlist, verifies root-owned path components and executable format, then executes the opened inode through `/proc/self/fd`. The distro-owned Python version alias and, since 0.3.8, a bounded root-managed `omarchy-launch-terminal` alias ending at the verified bash script are validated; other executable symlinks are refused. |
 | Unbounded helper stdout/stderr | Short commands have separate 512 KiB stdout / 128 KiB stderr limits and deadlines. Both streams are drained without waiting on unbounded `communicate()` output. |
 | Descendants could survive a helper timeout | Helper process groups are killed before the leader is reaped, including on success; repeated cleanup cannot signal a reused PID. |
 | Installer automatically ran ambient shell commands | `install.py` launches no subprocesses and performs no downloads. It prints a manual shell-restart instruction. |

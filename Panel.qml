@@ -6,6 +6,7 @@ import Quickshell
 import Quickshell.Io
 import qs.Ui
 import qs.Commons
+import qs.Commons as Commons
 
 Panel {
     id: root
@@ -15,9 +16,9 @@ Panel {
     implicitWidth: barButton.implicitWidth
     implicitHeight: barButton.implicitHeight
     readonly property var fontStyle: Style.font
-    readonly property var colors: Color.popups
+    readonly property var colors: Commons.Color.popups
     readonly property color ink: colors.text
-    readonly property color accent: Color.accent
+    readonly property color accent: Commons.Color.accent
     readonly property color muted: fade(ink, 0.62)
     readonly property color success: accent
     readonly property color accentInk: contrast(ink, accent) >= contrast(colors.background, accent) ? ink : colors.background
@@ -295,7 +296,7 @@ Panel {
         }
         function status(): string {
             return JSON.stringify({
-                version: "0.3.7",
+                version: "0.3.8",
                 name: "OmaDroid",
                 theme: {
                     background: root.colors.background.toString(),
@@ -1267,7 +1268,7 @@ Panel {
                             width: parent.width
                             Label {
                                 width: parent.width
-                                text: "About OmaDroid · 0.3.7"
+                                text: "About OmaDroid · 0.3.8"
                                 font.bold: true
                             }
                             Label {
@@ -1278,7 +1279,7 @@ Panel {
                             }
                             Label {
                                 width: parent.width
-                                text: "Created and maintained by OneLegDave, with AI assistance from Codex on development and documentation. OneLegDave is the human owner and maintainer."
+                                text: "Created and maintained by OneLegDave, with AI assistance from Codex and Claude on development and documentation. OneLegDave is the human owner and maintainer."
                                 color: root.muted
                                 font.pixelSize: root.fontStyle.bodySmall
                             }
@@ -1439,7 +1440,7 @@ Panel {
         }
         background: Rectangle {
             radius: root.corner(7)
-            color: control.primary ? root.accent : control.down ? Style.pressedFillFor(root.ink, root.accent, Color.urgent) : control.hovered ? Style.hoverFillFor(root.ink, root.accent, Color.urgent) : Style.normalFillFor(root.ink, root.accent, Color.urgent)
+            color: control.primary ? root.accent : control.down ? Style.pressedFillFor(root.ink, root.accent, Commons.Color.urgent) : control.hovered ? Style.hoverFillFor(root.ink, root.accent, Commons.Color.urgent) : Style.normalFillFor(root.ink, root.accent, Commons.Color.urgent)
             border.width: control.activeFocus ? 2 : 1
             border.color: control.activeFocus ? root.accent : control.primary ? root.accent : root.fade(root.ink, 0.13)
             Behavior on color {
@@ -1530,9 +1531,9 @@ Panel {
         signal dismissed
         implicitHeight: noticeRow.implicitHeight + Style.space(20)
         radius: root.corner(8)
-        color: root.fade(error ? Color.urgent : root.accent, 0.08)
+        color: root.fade(error ? Commons.Color.urgent : root.accent, 0.08)
         border.width: 1
-        border.color: root.fade(error ? Color.urgent : root.accent, 0.22)
+        border.color: root.fade(error ? Commons.Color.urgent : root.accent, 0.22)
         RowLayout {
             id: noticeRow
             x: Style.space(10)
@@ -1542,7 +1543,7 @@ Panel {
                 Layout.fillWidth: true
                 text: notice.text
                 font.pixelSize: root.fontStyle.bodySmall
-                color: notice.error ? Color.urgent : root.ink
+                color: notice.error ? Commons.Color.urgent : root.ink
             }
             ActionButton {
                 visible: notice.dismissible

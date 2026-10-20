@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.8 — 2026-10-19
+
+- Accept a root-managed alias for the desktop terminal launcher. Up to four links are followed one verified step at a time: each link must be root-owned, every directory on each path must be a root-owned, non-writable real directory, and the result must be the root-owned `omarchy-launch-terminal` bash script, executed through its verified descriptor and the verified bash. Aliases for other tools stay refused, except the existing Python version alias.
+- Keep refusing launchers that resolve into a user-owned checkout, such as the `~/.local/share/omarchy` links created by OmarchyMac's 3.x upgrade, or through a symlinked directory, loop, dangling link, or other file. These layouts keep the 0.3.6 manual installation commands. Investigation for [#2](https://github.com/onelegdave/omadroid/issues/2).
+- Read the Omarchy theme colors as `Commons.Color`. Under Qt 6.12, QtQuick's own `Color` shadowed the theme and the panel's colors were undefined.
+
 ## 0.3.7 — 2026-10-08
 
 - Prevent ADB mDNS from substituting an advertised destination for a validated numeric endpoint. Disable mDNS in the helper environment and require the running daemon to report mDNS disabled before Pair/Connect; otherwise refuse with manual recovery guidance.

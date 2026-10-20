@@ -283,26 +283,7 @@ legacy _adb._tcp. 192.168.1.3:5555
         with self.assertRaises(phone.UserError):
             phone.action({"action": "shell", "command": "id"})
 
-    def test_symlinked_installer_is_refused_with_manual_guidance(self):
-        with tempfile.TemporaryDirectory() as temp:
-            link = Path(temp) / 'launcher'
-            link.symlink_to('/usr/bin/omarchy-launch-terminal')
-            original_open = os.open
-
-            def open_tool(path, flags, *args, **kwargs):
-                if path == 'omarchy-launch-terminal':
-                    return original_open(link, flags)
-                return original_open(path, flags, *args, **kwargs)
-
-            with patch.object(phone.commands.os, 'open', side_effect=open_tool), \
-                 patch.object(phone.commands.subprocess, 'Popen') as spawn:
-                self.assertFalse(phone.commands.available('omarchy-launch-terminal'))
-                with self.assertRaises(phone.UserError) as error:
-                    phone.action({'action': 'install-tools', 'group': 'core'})
-            self.assertIn('Automatic installation is unavailable', str(error.exception))
-            self.assertIn('sudo pacman -S --needed scrcpy android-tools', str(error.exception))
-            self.assertNotIn('Too many levels', str(error.exception))
-            spawn.assert_not_called()
+    # Launcher alias acceptance and refusal are covered in test_launcher_alias.py.
 
     def test_installer_launch_failures_give_requested_group_instructions(self):
         groups = {

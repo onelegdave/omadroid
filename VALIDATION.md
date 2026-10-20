@@ -1,4 +1,13 @@
-# Validation — 0.3.7
+# Validation — 0.3.8
+
+## 0.3.8 terminal launcher alias and Qt 6.12 colors — 2026-10-19
+
+- Work started from a clean tree at public 0.3.7 commit `5c6366bd1bfd390da81ff6e0344f28bf05ad5faf`. Upstream recipe and installer sources linked in [SECURITY.md](SECURITY.md) were inspected. Packaged Omarchy installs a regular `/usr/bin/omarchy-launch-terminal`. OmarchyMac's 3.x-to-Quattro upgrade links it into a home-directory checkout. The reporter's exact layout is still unconfirmed.
+- 14 new fixture tests build an isolated root tree whose owner stands in for root. They cover accepted relative and absolute single-hop aliases and a real launch of the verified script through verified bash with the expected arguments. The accepted alias also reaches the fixed installer route, and the fake launcher only records its arguments. Replacing the alias and script after verification still runs the original inode. The tests refuse chains over four links, loops, dangling links, user-owned home-checkout targets, symlinked `/usr/share/omarchy`, writable or setuid ancestors and targets, foreign-owned links, wrong target names, non-bash or modified shebangs, ELF targets, non-script verification, and aliases for every other tool. A refused layout gives manual commands and never starts a process.
+- Mutation checks confirmed that the tests detect removal of each new check: owner, target name, bash-only alias target, tool restriction, and the chain bound. Without the bound, the loop test ran until a 30-second timeout. Disabling alias handling reproduces the reported `[Errno 40] Too many levels of symbolic links: 'omarchy-launch-terminal'`.
+- All 124 Python tests pass with no skips on an x86_64 Omarchy 4.0.5 desktop (Python 3.14, Qt 6.12.0, Quickshell 0.3.2), using an isolated source copy, HOME, XDG paths, and session bus. The isolated real ADB startup test used its own port and key store. The desktop's normal ADB server process was unchanged. QML lint and Omarchy manifest validation pass. That desktop's packaged launcher (a regular file) still verifies directly.
+- On Qt 6.12.0, an isolated Quickshell instance loaded 0.3.7's Panel.qml with a synthetic backend. Theme colors were undefined, About text rendered black, and five TypeError/QColor warnings appeared. With `Commons.Color`, the colors resolve to the active Omarchy theme, with no warnings. The Help page and About card were inspected visually. The installed plugin and desktop settings were not changed.
+- No package was installed and no real launcher, link, phone, or ADB setting was changed. Alias support is fixture-tested. It was not tested on a physical Apple Silicon Mac or on the reporter's system. These checks do not constitute marketplace approval.
 
 ## 0.3.7 ADB destination correction — 2026-10-08
 

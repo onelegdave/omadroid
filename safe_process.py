@@ -1,7 +1,9 @@
 """Fixed distro executables, explicit environment, bounded pipes, group cleanup."""
 from contextlib import contextmanager, ExitStack
+import errno
 import os
 from pathlib import Path
+import posixpath
 import pwd
 import re
 import selectors
@@ -52,10 +54,47 @@ def tool_environment():
     return env
 
 
+# Tests point these at an isolated fixture tree; production always uses the real root.
+ROOT = '/'
+TRUSTED_UID = 0
+# Only the terminal launcher may be a root-managed alias, through a bounded chain.
+LAUNCHER = 'omarchy-launch-terminal'
+LAUNCHER_ALIAS_LIMIT = 4
+
+
 def trusted_node(info, directory=False):
     expected = stat.S_ISDIR if directory else stat.S_ISREG
-    if not expected(info.st_mode) or info.st_uid != 0 or info.st_mode & (0o022 | stat.S_ISUID | stat.S_ISGID):
+    if not expected(info.st_mode) or info.st_uid != TRUSTED_UID or info.st_mode & (0o022 | stat.S_ISUID | stat.S_ISGID):
         raise ToolError('Tool must be a root-owned, non-writable system file')
+
+
+def trusted_directory(parts):
+    """Open absolute path components from the root without following links, verifying each."""
+    parent = os.open(ROOT, os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
+    try:
+        trusted_node(os.fstat(parent), directory=True)
+        for part in parts:
+            child = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=parent)
+            os.close(parent)
+            parent = child
+            trusted_node(os.fstat(parent), directory=True)
+    except BaseException:
+        os.close(parent)
+        raise
+    return parent
+
+
+def launcher_alias(parent, path):
+    """Next path named by a root-owned launcher link inside an already verified directory."""
+    name = posixpath.basename(path)
+    if os.stat(name, dir_fd=parent, follow_symlinks=False).st_uid != TRUSTED_UID:
+        raise ToolError('Untrusted terminal launcher alias')
+    # Lexical only: the caller reopens every component of the result without
+    # following links, so a symlinked directory or user-owned checkout is refused.
+    target = posixpath.normpath(posixpath.join(posixpath.dirname(path), os.readlink(name, dir_fd=parent)))
+    if posixpath.basename(target) != LAUNCHER:
+        raise ToolError('Unexpected terminal launcher alias target')
+    return target
 
 
 @contextmanager
@@ -63,7 +102,8 @@ def verified_tool(name, script=False):
     path = TOOLS.get(name)
     if path is None:
         raise ToolError('Unknown system tool')
-    # Python's distro-managed symlink is the sole allowed executable alias.
+    # Python's distro-managed symlink and the terminal launcher's root-managed
+    # alias chain (below) are the only allowed executable aliases.
     if name == 'python3':
         target = os.readlink(path)
         if not re.fullmatch(r'python3\.\d+', target):
@@ -72,33 +112,44 @@ def verified_tool(name, script=False):
         if info.st_uid != 0:
             raise ToolError('Untrusted Python interpreter alias')
         path = '/usr/bin/' + target
-    parts = Path(path).parts
-    parent = os.open('/', os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
-    executable = None
+    parent = executable = None
+    hops = 0
     try:
-        trusted_node(os.fstat(parent), directory=True)
-        for part in parts[1:-1]:
-            child = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=parent)
+        while True:
+            parts = Path(path).parts
+            parent = trusted_directory(parts[1:-1])
+            try:
+                executable = os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC, dir_fd=parent)
+                break
+            except OSError as error:
+                # O_NOFOLLOW reports a link as ELOOP. Links for every other
+                # tool, and for a launcher not run as a script, stay refused.
+                if error.errno != errno.ELOOP or not script or name != LAUNCHER:
+                    raise
+            if hops == LAUNCHER_ALIAS_LIMIT:
+                raise ToolError('Terminal launcher alias chain is too long')
+            path = launcher_alias(parent, path)
             os.close(parent)
-            parent = child
-            trusted_node(os.fstat(parent), directory=True)
-        executable = os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC, dir_fd=parent)
+            parent = None
+            hops += 1
         info = os.fstat(executable)
         trusted_node(info)
         magic = os.pread(executable, 16, 0)
-        allowed_script = script and name == 'omarchy-launch-terminal' and magic.startswith(b'#!/bin/bash\n')
-        if not info.st_mode & 0o111 or (magic[:4] != b'\x7fELF' and not allowed_script):
+        allowed_script = script and name == LAUNCHER and magic.startswith(b'#!/bin/bash\n')
+        # An alias must end at the expected bash script, never another executable.
+        if not info.st_mode & 0o111 or (magic[:4] != b'\x7fELF' and not allowed_script) or (hops and not allowed_script):
             raise ToolError('Unexpected executable format')
         yield path, executable
     finally:
         if executable is not None:
             os.close(executable)
-        os.close(parent)
+        if parent is not None:
+            os.close(parent)
 
 
 def available(name):
     try:
-        with verified_tool(name, script=name == 'omarchy-launch-terminal'):
+        with verified_tool(name, script=name == LAUNCHER):
             return True
     except (OSError, ToolError):
         return False
