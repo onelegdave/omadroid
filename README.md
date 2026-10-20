@@ -6,7 +6,9 @@ An Omarchy bar plugin for mirroring and controlling Android phones with your com
 
 No root, paid service, Samsung account, or additional Android mirroring app is required. This is an independent community plugin, not an official Omarchy, KDE, Samsung, or scrcpy product.
 
-![OmaDroid desktop setup with manual installation guidance](preview.png)
+![OmaDroid promotional cover showing its phone controls, a fictional Android mirror, and key features](preview.png)
+
+The cover is promotional artwork using fictional device information and screen content. [Native demo captures and artwork details](docs/screenshots.md) are available separately.
 
 [More screenshots](docs/screenshots.md) · [Release v0.3.8](https://github.com/onelegdave/omadroid/releases/tag/v0.3.8) · [Security and privacy](SECURITY.md)
 
@@ -147,7 +149,7 @@ Thanks to [@HermeticOrmus](https://github.com/HermeticOrmus) for fixing ADB read
 
 ## AI assistance
 
-Codex assisted with development and documentation on this project, alongside other AI tools at various points. Claude contributed code, security tests, and documentation. OneLegDave remains the human owner and maintainer.
+Codex assisted with development and documentation on this project, alongside other AI tools at various points, and with independent review, fictional demo captures, and promotional artwork. OpenAI's built-in image generation produced the marketplace cover. Claude contributed code, security tests, and documentation. OneLegDave remains the human owner and maintainer.
 
 ## About
 

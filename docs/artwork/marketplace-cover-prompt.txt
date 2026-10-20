@@ -1,0 +1,22 @@
+Use case: ads-marketing
+Asset type: professional landscape marketplace one-sheet for OmaDroid, about 1600 by 1000 pixels.
+Primary request: A polished advertisement for OmaDroid showing what it does, with entirely fictional demo information. Match the supplied System QuikView and OmaChat cover family. This is NEW OmaDroid artwork.
+Input roles: Image 1 is the OmaChat STYLE reference only. Image 2 is the matching System QuikView STYLE reference only. Image 3 is the actual current OmaDroid Phones panel rendered from native QML with a simulated phone; use it as the faithful app interface insert. Never copy chat features, telemetry features, or brands from the style references.
+Style: premium desktop software cover, Tokyo Night deep navy, subtle blue circles and fine orbit arcs, bright white and electric-blue bold sans-serif heading, blue outline feature icons, extremely crisp legible copy, airy spacing, fine blue interface frame and restrained glow.
+Composition: OmaDroid name and its simple outlined phone mark at upper left. Small spaced NATIVE OMARCHY PLUGIN at upper right. Large two-line headline at left, short supporting sentence and a 2-column by 3-row feature grid below it. Right side: the native OmaDroid panel shown straight-on and legibly, paired with a separate tall scrcpy mirror window of a fictional Android phone. Make the separate mirror window recognizable, with a small desktop title bar 'Demo Phone', not an embedded feature inside the OmaDroid control panel. Show a tasteful generic Android demo home screen: 09:41, a blue geometric wallpaper, simple generic icons Camera / Notes / Music, no brands or personal content. Give the phone window enough visual presence to communicate screen mirroring. Panel and phone may overlap gently without hiding the main phone controls. Use generous margins and a bottom strip matching the reference family.
+Text (verbatim):
+'OmaDroid'
+'NATIVE OMARCHY PLUGIN'
+'Your Android.'
+'On your desktop.'
+'Mirror and control your phone with your mouse and keyboard.'
+'Wi-Fi & USB mirroring'
+'Mouse & keyboard control'
+'Phone audio'
+'Multiple phones'
+'Guided setup'
+'Quality & reconnect controls'
+'Powered by scrcpy & ADB • Optional KDE Connect'
+'All device information and screen content shown are fictional.'
+'Wireless pairing and audio require Android 11+. App and device restrictions apply.'
+Constraints: Preserve OmaDroid capitalization, current native panel structure and fictional Demo Phone label. Do not add notification sync or file transfer controls to OmaDroid. KDE Connect is optional and separate. No claim of bypassing Android locks, remote cloud mirroring, universal hardware support, or marketplace approval. Do not introduce QR codes, IPs, real serials, actual accounts, messages, passwords or pairing codes. No logos from style references. No version badges. Keep actual native UI labels recognizable; tiny secondary explanatory text may be simplified to remain readable. This is promotional artwork informed by a real native demo capture; it is not a pixel-exact screenshot of a physical phone session. No watermarks.

@@ -1,5 +1,7 @@
 # Validation — 0.3.8
 
+Independent release review on 19 October 2026 reran all 123 Python tests, QML lint and plugin validation from a Git archive of `3ef5aca77b8ebcd007f3e18fdcde33a3b240ee4a`; all passed. The current Phones and Desktop setup panels were rendered in dark and light themes with an isolated fictional backend, plus Settings in a dark theme, without QML errors. The release cover is promotional artwork based on these demo captures, with a separately illustrated fictional phone screen. Artwork and documentation changes do not change the tested runtime files. Physical OmarchyMac and fresh package installation remain untested.
+
 ## 0.3.8 installer terminal and Qt 6.12 colors — 2026-10-19
 
 - Work started from a clean tree at public 0.3.7 commit `5c6366bd1bfd390da81ff6e0344f28bf05ad5faf`. The upstream package recipe, OmarchyMac upgrade script, package lists, and terminal launcher linked in [SECURITY.md](SECURITY.md) were inspected. Packaged Omarchy installs a regular `/usr/bin/omarchy-launch-terminal`. OmarchyMac's 3.x-to-Quattro upgrade links it into a home-directory checkout after installing a base package set that includes `foot`. The reporter's exact layout is still unconfirmed.
