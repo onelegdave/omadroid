@@ -451,7 +451,9 @@ def adb_can_start():
 
 def status():
     dependencies = {key: bool(commands.available(value)) for key, value in
-                    {"adb": "adb", "scrcpy": "scrcpy", "kdeconnect": "kdeconnect-cli", "avahi": "avahi-browse", "installer": "omarchy-launch-terminal"}.items()}
+                    {"adb": "adb", "scrcpy": "scrcpy", "kdeconnect": "kdeconnect-cli", "avahi": "avahi-browse"}.items()}
+    # Offer installation only when a route that open_desktop_app would use verifies.
+    dependencies['installer'] = bool(commands.available('omarchy-launch-terminal') or commands.available('foot'))
     dependencies['usbRules'] = commands.available('pacman') and run(['pacman', '-Qq', 'android-udev']).returncode == 0
     dependencies['discoveryReady'] = dependencies['avahi'] and commands.available('systemctl') and run(['systemctl', 'is-active', '--quiet', 'avahi-daemon.service']).returncode == 0
     adb_ok, adb_error = adb_can_start()
@@ -710,8 +712,16 @@ def open_desktop_app(kind, group=None):
             try:
                 process = stack.enter_context(commands.launch('omarchy-launch-terminal', args, script=True))
             except (OSError, commands.ToolError):
-                raise UserError(manual_install_message(group)) from None
-            result = commands.collect(process, args, 8)
+                # The launcher is missing or refused, for example a link into a
+                # user-owned checkout. That script never runs; the packaged
+                # terminal shows the same fixed installer instead.
+                try:
+                    commands.open_terminal(args)
+                except (OSError, commands.ToolError):
+                    raise UserError(manual_install_message(group)) from None
+                result = subprocess.CompletedProcess(args, 0, '', '')
+            else:
+                result = commands.collect(process, args, 8)
     else:
         # A user-requested GUI runs as its own transient desktop service.
         args = ['systemd-run', '--user', '--collect', '--quiet', '/usr/bin/env', '-i',

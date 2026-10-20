@@ -44,7 +44,7 @@ class NetworkPolicyTests(unittest.TestCase):
         for token in ('XMLHttpRequest','WebSocket','WebEngine','https://','http://','execDetached','openUrlExternally'):
             self.assertNotIn(token,qml)
     def test_helper_allowlist_cannot_silently_gain_downloaders(self):
-        expected={'adb','scrcpy','avahi-browse','busctl','kdeconnect-cli','kdeconnect-app','notify-send','pacman','systemctl','systemd-run','bash','python3','omarchy-launch-terminal'}
+        expected={'adb','scrcpy','avahi-browse','busctl','kdeconnect-cli','kdeconnect-app','notify-send','pacman','systemctl','systemd-run','bash','python3','omarchy-launch-terminal','foot'}
         self.assertEqual(set(commands.TOOLS),expected)
         self.assertTrue(all(path=='/usr/bin/'+name for name,path in commands.TOOLS.items()))
     def test_public_target_is_rejected_before_connect_or_pair(self):

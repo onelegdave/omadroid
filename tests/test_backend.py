@@ -283,7 +283,7 @@ legacy _adb._tcp. 192.168.1.3:5555
         with self.assertRaises(phone.UserError):
             phone.action({"action": "shell", "command": "id"})
 
-    # Launcher alias acceptance and refusal are covered in test_launcher_alias.py.
+    # Installer routes in real fixture layouts are covered in test_installer_terminal.py.
 
     def test_installer_launch_failures_give_requested_group_instructions(self):
         groups = {
@@ -301,9 +301,12 @@ legacy _adb._tcp. 192.168.1.3:5555
             for failure in failures:
                 with self.subTest(group=group, failure=type(failure).__name__):
                     with patch.object(phone.commands, 'launch', side_effect=failure), \
+                         patch.object(phone.commands, 'open_terminal', side_effect=failure) as terminal, \
                          patch.object(phone.commands, 'collect') as collect:
                         with self.assertRaises(phone.UserError) as error:
                             phone.action({'action': 'install-tools', 'group': group})
+                    terminal.assert_called_once()
+                    self.assertEqual(terminal.call_args.args[0][-1], group)
                     message = str(error.exception)
                     self.assertIn('supported updater', message)
                     self.assertIn('sudo pacman -S --needed ' + packages, message)
@@ -323,10 +326,13 @@ legacy _adb._tcp. 192.168.1.3:5555
                 closed.append(True)
 
         with patch.object(phone.commands, 'launch', launch), \
+             patch.object(phone.commands, 'open_terminal') as terminal, \
              patch.object(phone.commands, 'collect', side_effect=phone.commands.ToolError('Command exceeded its deadline')):
             with self.assertRaisesRegex(phone.commands.ToolError, 'deadline'):
                 phone.action({'action': 'install-tools', 'group': 'core'})
         self.assertEqual(closed, [True])
+        # A launcher that started but failed must not open a second terminal.
+        terminal.assert_not_called()
 
     def test_installer_success_preserves_verified_launch_route(self):
         process = object()
@@ -338,10 +344,12 @@ legacy _adb._tcp. 192.168.1.3:5555
             yield process
 
         with patch.object(phone.commands, 'launch', launch), \
+             patch.object(phone.commands, 'open_terminal') as terminal, \
              patch.object(phone.commands, 'tool_environment', return_value={'PATH': '/usr/bin'}), \
              patch.object(phone.commands, 'collect', return_value=subprocess.CompletedProcess([], 0, '', '')) as collect:
             result = phone.action({'action': 'install-tools', 'group': 'core'})
         self.assertTrue(result['ok'])
+        terminal.assert_not_called()
         self.assertEqual(len(calls), 1)
         name, args, script = calls[0]
         self.assertEqual(name, 'omarchy-launch-terminal')
@@ -349,11 +357,31 @@ legacy _adb._tcp. 192.168.1.3:5555
         self.assertEqual(args, ['/usr/bin/env', '-i', 'PATH=/usr/bin', '/usr/bin/bash', '--noprofile', '--norc', str(Path(phone.__file__).parent / 'install-deps.sh'), 'core'])
         collect.assert_called_once_with(process, args, 8)
 
+    def test_refused_launcher_opens_same_fixed_installer_in_packaged_terminal(self):
+        with patch.object(phone.commands, 'launch', side_effect=OSError(errno.ELOOP, 'Too many levels of symbolic links')), \
+             patch.object(phone.commands, 'open_terminal') as terminal, \
+             patch.object(phone.commands, 'tool_environment', return_value={'PATH': '/usr/bin'}), \
+             patch.object(phone.commands, 'collect') as collect:
+            result = phone.action({'action': 'install-tools', 'group': 'companion'})
+        self.assertTrue(result['ok'])
+        self.assertIn('Installer opened', result['message'])
+        terminal.assert_called_once_with(['/usr/bin/env', '-i', 'PATH=/usr/bin', '/usr/bin/bash', '--noprofile', '--norc', str(Path(phone.__file__).parent / 'install-deps.sh'), 'companion'])
+        collect.assert_not_called()
+
+    def test_status_offers_installation_only_for_a_verified_route(self):
+        for launcher, terminal in ((True, False), (False, True), (False, False)):
+            with self.subTest(launcher=launcher, terminal=terminal):
+                verified = {'omarchy-launch-terminal': launcher, 'foot': terminal}
+                with patch.object(phone.commands, 'available', side_effect=lambda name: verified.get(name, False)):
+                    self.assertIs(phone.status()['dependencies']['installer'], launcher or terminal)
+
     def test_unknown_install_group_never_launches(self):
-        with patch.object(phone.commands, 'launch') as launch:
+        with patch.object(phone.commands, 'launch') as launch, \
+             patch.object(phone.commands, 'open_terminal') as terminal:
             with self.assertRaisesRegex(phone.UserError, 'Unknown dependency group'):
                 phone.action({'action': 'install-tools', 'group': 'core; touch /tmp/not-a-command'})
         launch.assert_not_called()
+        terminal.assert_not_called()
 
     def test_disconnect_pauses_known_identity_and_only_target_transport(self):
         phone.write_connection_state({'phones':[{'identity':'KNOWN','name':'Pixel','address':'192.168.1.2:43200'}]})

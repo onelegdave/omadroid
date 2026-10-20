@@ -2,8 +2,8 @@
 
 ## 0.3.8 — 2026-10-19
 
-- Accept a root-managed alias for the desktop terminal launcher. Up to four links are followed one verified step at a time: each link must be root-owned, every directory on each path must be a root-owned, non-writable real directory, and the result must be the root-owned `omarchy-launch-terminal` bash script, executed through its verified descriptor and the verified bash. Aliases for other tools stay refused, except the existing Python version alias.
-- Keep refusing launchers that resolve into a user-owned checkout, such as the `~/.local/share/omarchy` links created by OmarchyMac's 3.x upgrade, or through a symlinked directory, loop, dangling link, or other file. These layouts keep the 0.3.6 manual installation commands. Investigation for [#2](https://github.com/onelegdave/omadroid/issues/2).
+- Install buttons work again when the desktop terminal launcher is refused, such as the `/usr/bin/omarchy-launch-terminal` link into the user's `~/.local/share/omarchy` checkout that OmarchyMac's 3.x-to-Quattro upgrade creates ([#2](https://github.com/onelegdave/omadroid/issues/2)). OmaDroid now opens the same fixed installer in the distro-packaged `/usr/bin/foot` terminal, which Omarchy and OmarchyMac install by default. foot gets the same verification as every other tool and runs from its verified descriptor with the clean environment and no user foot configuration. The window stays open for the package transaction; a terminal that closes during startup is cleaned up and reported.
+- The refused launcher is never run and launcher symlinks stay refused. A verified packaged launcher is still preferred. When neither route verifies, the 0.3.6 manual commands remain.
 - Read the Omarchy theme colors as `Commons.Color`. Under Qt 6.12, QtQuick's own `Color` shadowed the theme and the panel's colors were undefined.
 
 ## 0.3.7 — 2026-10-08

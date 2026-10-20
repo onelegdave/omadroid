@@ -1,9 +1,7 @@
 """Fixed distro executables, explicit environment, bounded pipes, group cleanup."""
 from contextlib import contextmanager, ExitStack
-import errno
 import os
 from pathlib import Path
-import posixpath
 import pwd
 import re
 import selectors
@@ -14,7 +12,7 @@ import time
 
 TOOLS = {name: '/usr/bin/' + name for name in (
     'adb', 'scrcpy', 'avahi-browse', 'busctl', 'kdeconnect-cli', 'kdeconnect-app',
-    'notify-send', 'pacman', 'systemctl', 'systemd-run', 'bash', 'python3', 'omarchy-launch-terminal')}
+    'notify-send', 'pacman', 'systemctl', 'systemd-run', 'bash', 'python3', 'omarchy-launch-terminal', 'foot')}
 STDOUT_LIMIT = 512 * 1024
 STDERR_LIMIT = 128 * 1024
 
@@ -57,9 +55,9 @@ def tool_environment():
 # Tests point these at an isolated fixture tree; production always uses the real root.
 ROOT = '/'
 TRUSTED_UID = 0
-# Only the terminal launcher may be a root-managed alias, through a bounded chain.
-LAUNCHER = 'omarchy-launch-terminal'
-LAUNCHER_ALIAS_LIMIT = 4
+# The terminal must stay open past its startup check for the user's package
+# transaction; an exit within this window is a failed start.
+TERMINAL_STARTUP = 1.5
 
 
 def trusted_node(info, directory=False):
@@ -68,42 +66,12 @@ def trusted_node(info, directory=False):
         raise ToolError('Tool must be a root-owned, non-writable system file')
 
 
-def trusted_directory(parts):
-    """Open absolute path components from the root without following links, verifying each."""
-    parent = os.open(ROOT, os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
-    try:
-        trusted_node(os.fstat(parent), directory=True)
-        for part in parts:
-            child = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=parent)
-            os.close(parent)
-            parent = child
-            trusted_node(os.fstat(parent), directory=True)
-    except BaseException:
-        os.close(parent)
-        raise
-    return parent
-
-
-def launcher_alias(parent, path):
-    """Next path named by a root-owned launcher link inside an already verified directory."""
-    name = posixpath.basename(path)
-    if os.stat(name, dir_fd=parent, follow_symlinks=False).st_uid != TRUSTED_UID:
-        raise ToolError('Untrusted terminal launcher alias')
-    # Lexical only: the caller reopens every component of the result without
-    # following links, so a symlinked directory or user-owned checkout is refused.
-    target = posixpath.normpath(posixpath.join(posixpath.dirname(path), os.readlink(name, dir_fd=parent)))
-    if posixpath.basename(target) != LAUNCHER:
-        raise ToolError('Unexpected terminal launcher alias target')
-    return target
-
-
 @contextmanager
 def verified_tool(name, script=False):
     path = TOOLS.get(name)
     if path is None:
         raise ToolError('Unknown system tool')
-    # Python's distro-managed symlink and the terminal launcher's root-managed
-    # alias chain (below) are the only allowed executable aliases.
+    # Python's distro-managed symlink is the sole allowed executable alias.
     if name == 'python3':
         target = os.readlink(path)
         if not re.fullmatch(r'python3\.\d+', target):
@@ -112,44 +80,33 @@ def verified_tool(name, script=False):
         if info.st_uid != 0:
             raise ToolError('Untrusted Python interpreter alias')
         path = '/usr/bin/' + target
-    parent = executable = None
-    hops = 0
+    parts = Path(path).parts
+    parent = os.open(ROOT, os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
+    executable = None
     try:
-        while True:
-            parts = Path(path).parts
-            parent = trusted_directory(parts[1:-1])
-            try:
-                executable = os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC, dir_fd=parent)
-                break
-            except OSError as error:
-                # O_NOFOLLOW reports a link as ELOOP. Links for every other
-                # tool, and for a launcher not run as a script, stay refused.
-                if error.errno != errno.ELOOP or not script or name != LAUNCHER:
-                    raise
-            if hops == LAUNCHER_ALIAS_LIMIT:
-                raise ToolError('Terminal launcher alias chain is too long')
-            path = launcher_alias(parent, path)
+        trusted_node(os.fstat(parent), directory=True)
+        for part in parts[1:-1]:
+            child = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=parent)
             os.close(parent)
-            parent = None
-            hops += 1
+            parent = child
+            trusted_node(os.fstat(parent), directory=True)
+        executable = os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC, dir_fd=parent)
         info = os.fstat(executable)
         trusted_node(info)
         magic = os.pread(executable, 16, 0)
-        allowed_script = script and name == LAUNCHER and magic.startswith(b'#!/bin/bash\n')
-        # An alias must end at the expected bash script, never another executable.
-        if not info.st_mode & 0o111 or (magic[:4] != b'\x7fELF' and not allowed_script) or (hops and not allowed_script):
+        allowed_script = script and name == 'omarchy-launch-terminal' and magic.startswith(b'#!/bin/bash\n')
+        if not info.st_mode & 0o111 or (magic[:4] != b'\x7fELF' and not allowed_script):
             raise ToolError('Unexpected executable format')
         yield path, executable
     finally:
         if executable is not None:
             os.close(executable)
-        if parent is not None:
-            os.close(parent)
+        os.close(parent)
 
 
 def available(name):
     try:
-        with verified_tool(name, script=name == LAUNCHER):
+        with verified_tool(name, script=name == 'omarchy-launch-terminal'):
             return True
     except (OSError, ToolError):
         return False
@@ -196,6 +153,31 @@ def launch(name, args, input=False, script=False):
             yield process
         finally:
             cleanup(process)
+
+
+def open_terminal(command):
+    """Show a fixed command in the packaged foot terminal, then leave the window to the user.
+
+    Unlike launch(), the window is not killed at a deadline: the user's package
+    transaction can wait on a password or confirmation. It holds no pipe to this
+    process, so a one-shot caller can return once the terminal has started."""
+    with verified_tool('foot') as (path, fd):
+        # foot stops option parsing at "--"; /dev/null skips user foot.ini
+        # settings such as [environment] and shell.
+        process = subprocess.Popen([path, '--config=/dev/null', '--', *command], executable='/proc/self/fd/' + str(fd),
+                                   pass_fds=(fd,), stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                   stderr=subprocess.DEVNULL, env=tool_environment(), cwd='/',
+                                   start_new_session=True, close_fds=True)
+    try:
+        deadline = time.monotonic() + TERMINAL_STARTUP
+        while time.monotonic() < deadline:
+            if exited(process):
+                raise ToolError('The terminal closed during startup')
+            time.sleep(.05)
+    except BaseException:
+        cleanup(process)
+        raise
+    return process
 
 
 def collect(process, args, timeout, input=None, stdout_limit=STDOUT_LIMIT, stderr_limit=STDERR_LIMIT):
