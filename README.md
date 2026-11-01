@@ -10,7 +10,7 @@ No root, paid service, Samsung account, or additional Android mirroring app is r
 
 The cover is promotional artwork using fictional device information and screen content. [Native demo captures and artwork details](docs/screenshots.md) are available separately.
 
-[More screenshots](docs/screenshots.md) · [Release v0.3.8](https://github.com/onelegdave/omadroid/releases/tag/v0.3.8) · [Security and privacy](SECURITY.md)
+[More screenshots](docs/screenshots.md) · [Release v0.3.9](https://github.com/onelegdave/omadroid/releases/tag/v0.3.9) · [Security and privacy](SECURITY.md)
 
 ## Install
 
@@ -22,7 +22,7 @@ omarchy plugin add https://github.com/onelegdave/omadroid --enable
 
 Open the phone icon in the bar and follow **Connect → Desktop → Phone → Pair → Ready**. OmaDroid offers explicit Install buttons for missing desktop tools. Android debugging authorization is required; KDE Connect alone cannot mirror the phone.
 
-The command installs the current upstream branch. For the numbered release, download and extract `omadroid-v0.3.8.tar.gz` from [Releases](https://github.com/onelegdave/omadroid/releases/tag/v0.3.8), review its source, and use the local installer below. Checksums are included with the release.
+The command installs the current upstream branch. For the numbered release, download and extract `omadroid-v0.3.9.tar.gz` from [Releases](https://github.com/onelegdave/omadroid/releases/tag/v0.3.9), review its source, and use the local installer below. Checksums are included with the release.
 
 ## Requirements
 
@@ -147,9 +147,11 @@ Upstream documentation: [scrcpy](https://github.com/Genymobile/scrcpy), [Android
 
 Thanks to [@HermeticOrmus](https://github.com/HermeticOrmus) for fixing ADB readiness detection in [#1](https://github.com/onelegdave/omadroid/pull/1).
 
+Thanks to [@HamxAnwar](https://github.com/HamxAnwar) for diagnosing and fixing the ADB server start race at login in [#4](https://github.com/onelegdave/omadroid/issues/4) and [#5](https://github.com/onelegdave/omadroid/pull/5).
+
 ## AI assistance
 
-Codex assisted with development and documentation on this project, alongside other AI tools at various points, and with independent review, fictional demo captures, and promotional artwork. OpenAI's built-in image generation produced the marketplace cover. Claude contributed code, security tests, and documentation. OneLegDave remains the human owner and maintainer.
+Codex assisted with development and documentation on this project, alongside other AI tools at various points, and with independent review, fictional demo captures, and promotional artwork. OpenAI's built-in image generation produced the marketplace cover. Claude contributed code, security tests, reviews, release validation, and documentation. OneLegDave remains the human owner and maintainer.
 
 ## About
 

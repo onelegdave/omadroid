@@ -1,6 +1,10 @@
 # OmaDroid security and network behavior
 
-Review target: OmaDroid 0.3.8, 2026-10-19. This release adds a verified packaged-terminal route for dependency installation when the desktop terminal launcher is refused, and corrects theme colors under Qt 6.12, as described below. The 0.3.7 ADB destination and mDNS-server checks, the 0.3.6 startup and manual installation guidance, executable verification, launcher symlink rejection, permissions, and the phone endpoint allowlist are unchanged.
+Review target: OmaDroid 0.3.9, 2026-11-01. This release starts the local ADB server once before panel status queries it, as described below. The 0.3.8 packaged-terminal installer route and Qt 6.12 color correction, the 0.3.7 ADB destination and mDNS-server checks, the 0.3.6 startup and manual installation guidance, executable verification, launcher symlink rejection, permissions, and the phone endpoint allowlist are unchanged.
+
+## 0.3.9: single ADB server start
+
+[Issue #4](https://github.com/onelegdave/omadroid/issues/4) reported an ADB core dump at every login. Panel status ran two ADB clients concurrently; with no server running, each launched one, and the server that failed to bind `localhost:5037` aborted. After the existing `adb version` readiness probe succeeds, status now runs the fixed command `adb start-server` once through the same verified executable, bounded runner, clean helper environment (including `ADB_MDNS=0`), output caps, and default deadline, then starts the concurrent queries. A failure is ignored; later calls report errors as before. This adds no executable, argument from user or phone input, endpoint, listener, privilege, or storage. The server listens on the same local port it would have used before, and the 0.3.7 `mdns_enabled: false` check before Pair/Connect is unchanged.
 
 ## 0.3.8: installer terminal when the launcher is refused
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.9 — 2026-11-01
+
+- Stop ADB from crashing at login. Panel status ran `adb devices -l` and ADB discovery at the same time; with no ADB server running yet, both started one, and the server that lost the port aborted with a core dump and a crash notification ([#4](https://github.com/onelegdave/omadroid/issues/4)). Status now runs `adb start-server` once after the readiness probe, so the concurrent calls share one server. Thanks to [@HamxAnwar](https://github.com/HamxAnwar) for the diagnosis and fix in [#5](https://github.com/onelegdave/omadroid/pull/5).
+- The server still starts with the clean helper environment, so it reports `mdns_enabled: false` as the 0.3.7 Pair/Connect check requires. A failed start is ignored and later calls report errors as before.
+
 ## 0.3.8 — 2026-10-19
 
 - Install buttons work again when the desktop terminal launcher is refused, such as the `/usr/bin/omarchy-launch-terminal` link into the user's `~/.local/share/omarchy` checkout that OmarchyMac's 3.x-to-Quattro upgrade creates ([#2](https://github.com/onelegdave/omadroid/issues/2)). OmaDroid now opens the same fixed installer in the distro-packaged `/usr/bin/foot` terminal, which Omarchy and OmarchyMac install by default. foot gets the same verification as every other tool and runs from its verified descriptor with the clean environment and no user foot configuration. The window stays open for the package transaction; a terminal that closes during startup is cleaned up and reported.

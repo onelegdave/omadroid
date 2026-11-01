@@ -1,4 +1,12 @@
-# Validation — 0.3.8
+# Validation — 0.3.9
+
+## 0.3.9 ADB server start race — 2026-11-01
+
+- Contributed fix [#5](https://github.com/onelegdave/omadroid/pull/5) (commit `c6b550bd`) was tested from a fresh GitHub clone before merge on an x86_64 Omarchy desktop (android-tools 37.0.0p1) with no phone connected. All 123 Python tests passed with isolated HOME, XDG paths and session bus. QML lint and Omarchy manifest validation passed.
+- Cold-start reproduction: after `adb kill-server`, `phone_mirror.py status` was run five times on each commit. On 0.3.8 (`b80ef131`), all five runs left a new SIGABRT `adb` core dump; four logged the `*smartsocket*` bind failure and three returned an ADB error in panel status. With the fix, five of five runs left no core dump, no bind failure, and no status errors. Afterwards the running server reported `mdns_enabled: false`.
+- The UI is unchanged; the 0.3.8 captures remain current. A physical phone pairing and an actual reboot were not repeated for this release. These checks do not constitute marketplace approval.
+
+## 0.3.8 release review — 2026-10-19
 
 Independent release review on 19 October 2026 reran all 123 Python tests, QML lint and plugin validation from a Git archive of `3ef5aca77b8ebcd007f3e18fdcde33a3b240ee4a`; all passed. The current Phones and Desktop setup panels were rendered in dark and light themes with an isolated fictional backend, plus Settings in a dark theme, without QML errors. The release cover is promotional artwork based on these demo captures, with a separately illustrated fictional phone screen. Artwork and documentation changes do not change the tested runtime files. Physical OmarchyMac and fresh package installation remain untested.
 
