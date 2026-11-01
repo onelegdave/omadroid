@@ -461,6 +461,12 @@ def status():
     result = {"dependencies": dependencies, "devices": [], "services": [], "saved": saved(), "errors": []}
     if adb_error:
         result["errors"].append(adb_error)
+    if adb_ok:
+        # Start the server from one client first; two concurrent clients would each launch one and the loser aborts.
+        try:
+            run(["adb", "start-server"])
+        except UserError:
+            pass
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
         kde = pool.submit(kde_devices)
         adb = pool.submit(checked, ["adb", "devices", "-l"]) if dependencies["adb"] else None

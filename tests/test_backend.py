@@ -8,7 +8,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import phone_mirror as phone
@@ -87,7 +87,8 @@ PERMISSIONS no permissions (user in plugdev group; are your udev rules wrong?)
             result = phone.status()
         self.assertTrue(result["dependencies"]["adb"])
         self.assertEqual(result["errors"], [])
-        run.assert_called_once_with(["adb", "version"], timeout=5)
+        # The server is started once, before the concurrent adb calls, so they cannot race to launch it.
+        self.assertEqual(run.call_args_list, [call(["adb", "version"], timeout=5), call(["adb", "start-server"])])
         devices.assert_called_once_with(["adb", "devices", "-l"])
         discovery.assert_called_once_with()
 
