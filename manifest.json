@@ -13,11 +13,12 @@
     "category": "Connectivity",
     "allowMultiple": false,
     "defaultSection": "right",
-    "defaults": {"quality": "Balanced", "audio": true, "screenOff": false, "autoReconnect": true, "keepAwake": true},
+    "defaults": {"quality": "Balanced", "audio": true, "screenOff": false, "lockOnClose": true, "autoReconnect": true, "keepAwake": true},
     "schema": [
       {"key": "quality", "type": "enum", "label": "Mirror quality", "options": ["Balanced", "Sharp", "Low bandwidth"], "defaultValue": "Balanced"},
       {"key": "audio", "type": "boolean", "label": "Play phone audio on computer", "defaultValue": true},
       {"key": "screenOff", "type": "boolean", "label": "Turn phone screen off while mirroring", "defaultValue": false},
+      {"key": "lockOnClose", "type": "boolean", "label": "Lock phone when mirror closes", "defaultValue": true},
       {"key": "autoReconnect", "type": "boolean", "label": "Reconnect remembered phones automatically", "defaultValue": true},
       {"key": "keepAwake", "type": "boolean", "label": "Keep phone awake while mirroring", "defaultValue": true}
     ]

@@ -225,6 +225,54 @@ legacy _adb._tcp. 192.168.1.3:5555
         self.assertIn("--turn-screen-off", args)
         self.assertNotIn("--turn-screen-off", phone.scrcpy_command("ABC", {}))
 
+    def test_lock_on_close_defaults_and_screen_off_cleanup(self):
+        for options, power_off in (({}, True), ({'lockOnClose': True}, True),
+                                   ({'lockOnClose': False}, False),
+                                   ({'lockOnClose': False, 'screenOff': True}, True)):
+            with self.subTest(options=options):
+                self.assertEqual('--power-off-on-close' in phone.scrcpy_command('ABC', options), power_off)
+        manifest = json.loads(Path(phone.__file__).with_name('manifest.json').read_text())
+        self.assertIs(manifest['barWidget']['defaults']['lockOnClose'], True)
+        schema = next(item for item in manifest['barWidget']['schema'] if item['key'] == 'lockOnClose')
+        self.assertIs(schema['defaultValue'], True)
+
+    def test_sleep_and_keyguard_confirmation_are_explicit_and_bounded(self):
+        with patch.object(phone, 'checked', side_effect=['', '  isKeyguardShowing=true\n']) as command, \
+             patch.object(phone.time, 'sleep') as sleep:
+            phone.lock_phone('ABC')
+        self.assertEqual(command.call_args_list, [
+            call(['adb', '-s', 'ABC', 'shell', 'input', 'keyevent', 'KEYCODE_SLEEP'], timeout=2),
+            call(['adb', '-s', 'ABC', 'shell', 'dumpsys', 'window'], timeout=2)])
+        sleep.assert_not_called()
+
+    def test_lock_confirmation_retries_until_keyguard_shows(self):
+        with patch.object(phone, 'checked', side_effect=['', 'isKeyguardShowing=false',
+                                                       '', 'isKeyguardShowing=true']) as command, \
+             patch.object(phone.time, 'sleep') as sleep:
+            phone.lock_phone('ABC')
+        self.assertEqual(command.call_count, 4)
+        sleep.assert_called_once_with(1)
+
+    def test_lock_confirmation_failure_is_not_a_claim_the_phone_is_unlocked(self):
+        for output in ('isKeyguardShowing=false', '', 'isKeyguardShowing=trueish',
+                       'notisKeyguardShowing=true'):
+            with self.subTest(output=output), \
+                 patch.object(phone, 'checked', side_effect=['', output] * 3) as command, \
+                 patch.object(phone.time, 'sleep') as sleep:
+                with self.assertRaisesRegex(phone.UserError, 'Could not confirm the phone locked') as error:
+                    phone.lock_phone('ABC')
+                self.assertNotIn('unlocked', str(error.exception))
+                self.assertEqual(command.call_count, 6)
+                self.assertEqual(sleep.call_args_list, [call(1), call(1)])
+
+    def test_lock_retries_adb_failures_without_exposing_diagnostics(self):
+        with patch.object(phone, 'checked', side_effect=phone.UserError('private device diagnostic')) as command, \
+             patch.object(phone.time, 'sleep'):
+            with self.assertRaisesRegex(phone.UserError, 'Could not confirm the phone locked') as error:
+                phone.lock_phone('ABC')
+        self.assertNotIn('private device diagnostic', str(error.exception))
+        self.assertEqual(command.call_count, 3)
+
     def test_keep_awake_works_with_screen_off_without_changing_timeout(self):
         args = phone.scrcpy_command("ABC", {"keepAwake": True, "screenOff": True})
         self.assertIn("--keep-active", args)

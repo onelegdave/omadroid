@@ -517,6 +517,8 @@ def scrcpy_command(serial, options):
         args.append("--no-audio")
     if options.get("screenOff") is True:
         args.append("--turn-screen-off")
+    if options.get("screenOff") is True or options.get("lockOnClose") is not False:
+        args.append("--power-off-on-close")
     if options.get("keepAwake") is True:
         args.append("--keep-active")
     return args
@@ -525,6 +527,22 @@ def scrcpy_command(serial, options):
 def notify_error(message):
     if commands.available("notify-send"):
         run(["notify-send", "--app-name=OmaDroid", "OmaDroid", message[:500]])
+
+
+def lock_phone(serial):
+    """Request sleep without toggling power; confirm keyguard, not just ADB success."""
+    for attempt in range(3):
+        if attempt:
+            time.sleep(1)
+        try:
+            checked(['adb', '-s', serial, 'shell', 'input', 'keyevent', 'KEYCODE_SLEEP'], timeout=2)
+            output = checked(['adb', '-s', serial, 'shell', 'dumpsys', 'window'], timeout=2)
+            if re.search(r'\bisKeyguardShowing=true\b', output):
+                return
+        except UserError:
+            pass
+    raise UserError('Could not confirm the phone locked. Check the phone directly; '
+                    'its connection or lock-screen settings may prevent confirmation.')
 
 
 def process_identity(pid):
@@ -578,7 +596,7 @@ def stop_session(serial):
             os.close(descriptor)
     except ProcessLookupError:
         return
-    deadline = time.monotonic() + 4
+    deadline = time.monotonic() + 20
     while active(serial) and time.monotonic() < deadline:
         time.sleep(0.05)
     if active(serial):
@@ -608,9 +626,12 @@ def session(request):
         except BlockingIOError:
             announce(True, 'This phone is already mirroring.')
             return
+        launched = False
+        failure = ''
         try:
             with files.private_file(directory, key + '.log', truncate=True) as log:
                 with commands.launch('scrcpy', scrcpy_command(serial, request)[1:]) as child:
+                    launched = True
                     write_json('cache', key + '.session.json', {'pid': child.pid, 'start': process_identity(child.pid)})
                     started = time.monotonic()
                     total = 0
@@ -637,14 +658,24 @@ def session(request):
                     commands.cleanup(child)
                     if child.returncode and child.returncode != -signal.SIGTERM:
                         raise UserError(tail.decode(errors='replace') or 'Mirroring stopped. Check the phone connection.')
-                    announce(True, 'Mirror closed.')
         except (OSError, ValueError, UserError) as error:
-            if announced:
-                notify_error(str(error))
-            else:
-                announce(False, str(error))
+            failure = str(error)
         finally:
+            # launch() has stopped/reaped scrcpy (and its keep-active input)
+            # before sleep is requested. Keep the transport lock until this finishes.
+            if launched and request.get('lockOnClose') is not False:
+                try:
+                    lock_phone(serial)
+                except UserError as error:
+                    failure = str(error) + ('\n' + failure if failure else '')
             remove_cache(key + '.session.json')
+    if failure:
+        if announced:
+            notify_error(failure)
+        else:
+            announce(False, failure)
+    else:
+        announce(True, 'Mirror closed.')
 
 
 def start_session(request):
@@ -661,7 +692,8 @@ def start_session(request):
         child.stdin.write(payload)
         child.stdin.close()
         response = bytearray()
-        deadline = time.monotonic() + 6
+        # Early exits may still need the bounded phone-lock confirmation.
+        deadline = time.monotonic() + 25
         with selectors.DefaultSelector() as selector:
             os.set_blocking(child.stdout.fileno(), False)
             selector.register(child.stdout, selectors.EVENT_READ)
