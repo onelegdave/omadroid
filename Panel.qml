@@ -207,6 +207,7 @@ Panel {
             quality: setting("quality", "Balanced"),
             audio: setting("audio", true),
             screenOff: setting("screenOff", false),
+            lockOnClose: setting("lockOnClose", true),
             keepAwake: setting("keepAwake", true)
         });
     }
@@ -1147,6 +1148,16 @@ Panel {
                                 detail: "The phone display stays dark while its mirror remains usable. A little less glow, a little more battery."
                                 checked: root.setting("screenOff", false)
                                 onToggled: root.save("screenOff", checked)
+                            }
+                            Divider {
+                                width: parent.width
+                            }
+                            SettingToggle {
+                                width: parent.width
+                                title: "Lock phone when mirror closes"
+                                detail: "Request sleep and check the lock screen after closing the mirror. Closing this panel does not stop or lock the phone."
+                                checked: root.setting("lockOnClose", true)
+                                onToggled: root.save("lockOnClose", checked)
                             }
                             Divider {
                                 width: parent.width
