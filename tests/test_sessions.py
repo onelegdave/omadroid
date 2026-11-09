@@ -30,6 +30,8 @@ original_env = phone.commands.tool_environment
 @contextmanager
 def fixture_launch(name, args, input=False, script=False):
     fixture = Path(FIXTURES) / name
+    if name == 'scrcpy' and (Path(FIXTURES) / 'launch-refused').exists():
+        raise phone.UserError('Test scrcpy launch refused')
     if fixture.exists():
         child = subprocess.Popen([sys.executable, str(fixture), *args], stdin=subprocess.PIPE if input else subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True, env={**original_env(), 'PHONE_TEST_ROOT': FIXTURES})
         try: yield child
@@ -40,7 +42,27 @@ phone.commands.launch = fixture_launch
 phone.commands.available = lambda name: name in ('adb','scrcpy','notify-send')
 phone.main()
 """.replace('REPO',repr(str(Path(phone.__file__).parent))).replace('FIXTURES',repr(str(self.root))))
-        self.executable("adb", 'print("List of devices attached\\nABC device model:Test_Phone\\nDEF device model:Second_Phone")')
+        self.executable("adb", '''import json, os, sys
+from pathlib import Path
+root = Path(os.environ["PHONE_TEST_ROOT"])
+args = sys.argv[1:]
+with (root / "adb-calls").open("a") as stream:
+    stream.write(json.dumps(args) + "\\n")
+if args == ["devices", "-l"]:
+    print("List of devices attached\\nABC device model:Test_Phone\\nDEF device model:Second_Phone")
+elif args[3:] == ["input", "keyevent", "KEYCODE_SLEEP"]:
+    pid_file = root / ('mirror-pid-' + args[1])
+    if pid_file.exists():
+        try:
+            os.kill(int(pid_file.read_text()), 0)
+            (root / "sleep-while-mirroring").write_text("yes")
+        except ProcessLookupError:
+            pass
+elif args[3:] == ["dumpsys", "window"]:
+    print("isKeyguardShowing=" + ("false" if (root / "unconfirmed").exists() else "true"))
+elif args[3:] and 'getprop ro.serialno' in args[3]:
+    identity = '' if (root / ('unknown-' + args[1])).exists() else ('SAME1234' if (root / 'same-phone').exists() else args[1] + '1234')
+    print('serial=' + identity + '\\nboot=\\nname=Test Phone')''')
 
     def tearDown(self):
         self.temp.cleanup()
@@ -78,6 +100,7 @@ time.sleep(2.5)
         while not (self.root / "finished").exists() and time.monotonic() < deadline:
             time.sleep(0.05)
         self.assertTrue((self.root / "finished").exists())
+        self.wait_closed()
 
     def test_early_failure_reaches_panel(self):
         self.executable("scrcpy", 'import sys\nprint("ERROR: Test encoder unavailable", file=sys.stderr)\nsys.exit(1)')
@@ -104,6 +127,175 @@ time.sleep(2.5)
         self.assertTrue(logs)
         self.assertLessEqual(logs[0].stat().st_size, 1024*1024)
 
+    def adb_calls(self, command):
+        calls = [json.loads(line) for line in (self.root / 'adb-calls').read_text().splitlines()]
+        return [args for args in calls if args[3:] == command]
+
+    def wait_closed(self, serial='ABC'):
+        metadata = self.root / 'cache/phone-mirror' / (phone.session_key(serial) + '.session.json')
+        deadline = time.monotonic() + 8
+        while metadata.exists() and time.monotonic() < deadline:
+            time.sleep(.05)
+        self.assertFalse(metadata.exists(), 'Session did not finish cleanup')
+
+    def stop(self, serial):
+        result = subprocess.run([sys.executable, str(self.driver), 'action'],
+                                input=json.dumps({'action': 'stop', 'serial': serial}) + '\n',
+                                text=True, capture_output=True, env=self.env, timeout=25)
+        self.assertTrue(json.loads(result.stdout)['ok'], result.stdout)
+
+    def test_alias_mirror_is_refused_without_sleeping_the_active_phone(self):
+        (self.root / 'same-phone').touch()
+        self.executable('scrcpy', 'import time\ntime.sleep(30)')
+        self.assertTrue(self.request()['ok'])
+        try:
+            duplicate = self.request(serial='DEF')
+            self.assertFalse(duplicate['ok'])
+            self.assertIn('already mirroring', duplicate['message'])
+            self.assertEqual(self.adb_calls(['input', 'keyevent', 'KEYCODE_SLEEP']), [])
+            self.assertIn('already mirroring', self.request()['message'])
+        finally:
+            self.stop('ABC')
+        self.assertEqual(len(self.adb_calls(['input', 'keyevent', 'KEYCODE_SLEEP'])), 1)
+        self.assertTrue(self.request(serial='DEF')['ok'])
+        self.stop('DEF')
+
+    def test_unidentified_session_excludes_known_and_unknown_aliases(self):
+        (self.root / 'unknown-ABC').touch()
+        self.executable('scrcpy', 'import time\ntime.sleep(30)')
+        self.assertTrue(self.request()['ok'])
+        try:
+            self.assertFalse(self.request(serial='DEF')['ok'])
+            (self.root / 'unknown-DEF').touch()
+            self.assertFalse(self.request(serial='DEF')['ok'])
+            self.assertEqual(self.adb_calls(['input', 'keyevent', 'KEYCODE_SLEEP']), [])
+        finally:
+            self.stop('ABC')
+
+    def test_known_session_excludes_an_unidentified_alias(self):
+        (self.root / 'unknown-DEF').touch()
+        self.executable('scrcpy', 'import time\ntime.sleep(30)')
+        self.assertTrue(self.request()['ok'])
+        try:
+            self.assertFalse(self.request(serial='DEF')['ok'])
+            self.assertEqual(self.adb_calls(['input', 'keyevent', 'KEYCODE_SLEEP']), [])
+        finally:
+            self.stop('ABC')
+
+    def test_phone_reservation_is_held_through_lock_confirmation(self):
+        (self.root / 'same-phone').touch()
+        (self.root / 'unconfirmed').touch()
+        self.executable('scrcpy', 'import time\ntime.sleep(1.2)')
+        self.executable('notify-send', 'pass')
+        self.assertTrue(self.request()['ok'])
+        deadline = time.monotonic() + 3
+        while not self.adb_calls(['input', 'keyevent', 'KEYCODE_SLEEP']) and time.monotonic() < deadline:
+            time.sleep(.02)
+        self.assertTrue(self.adb_calls(['input', 'keyevent', 'KEYCODE_SLEEP']))
+        duplicate = self.request(serial='DEF')
+        self.assertFalse(duplicate['ok'])
+        self.wait_closed()
+
+    def test_simultaneous_alias_start_launches_only_one_mirror(self):
+        (self.root / 'same-phone').touch()
+        self.executable('scrcpy', 'import time\ntime.sleep(30)')
+        children = []
+        for serial in ('ABC', 'DEF'):
+            child = subprocess.Popen([sys.executable, str(self.driver), 'action'],
+                                     stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE, text=True, env=self.env)
+            child.stdin.write(json.dumps({'action': 'mirror', 'serial': serial}) + '\n')
+            child.stdin.close()
+            children.append((serial, child))
+        results = []
+        try:
+            for serial, child in children:
+                child.wait(timeout=8)
+                results.append((serial, json.loads(child.stdout.read())))
+            winners = [serial for serial, result in results if result['ok']]
+            self.assertEqual(len(winners), 1, results)
+            self.assertEqual(self.adb_calls(['input', 'keyevent', 'KEYCODE_SLEEP']), [])
+        finally:
+            for serial, result in results:
+                if result['ok']:
+                    self.stop(serial)
+            for _, child in children:
+                child.stdout.close()
+                child.stderr.close()
+
+    def test_launch_failure_releases_physical_phone_reservation(self):
+        (self.root / 'same-phone').touch()
+        (self.root / 'launch-refused').touch()
+        self.executable('scrcpy', 'import time\ntime.sleep(30)')
+        self.assertFalse(self.request()['ok'])
+        (self.root / 'launch-refused').unlink()
+        self.assertTrue(self.request(serial='DEF')['ok'])
+        self.stop('DEF')
+
+    def test_normal_window_close_sleeps_only_after_scrcpy_exits(self):
+        self.executable('scrcpy', '''import os, sys, time
+from pathlib import Path
+serial = next(arg.split('=', 1)[1] for arg in sys.argv if arg.startswith('--serial='))
+(Path(os.environ['PHONE_TEST_ROOT']) / ('mirror-pid-' + serial)).write_text(str(os.getpid()))
+time.sleep(1.2)''')
+        self.assertTrue(self.request(screenOff=True, keepAwake=False)['ok'])
+        self.wait_closed()
+        self.assertEqual(self.adb_calls(['input', 'keyevent', 'KEYCODE_SLEEP']),
+                         [['-s', 'ABC', 'shell', 'input', 'keyevent', 'KEYCODE_SLEEP']])
+        self.assertEqual(len(self.adb_calls(['dumpsys', 'window'])), 1)
+        self.assertFalse((self.root / 'sleep-while-mirroring').exists())
+
+    def test_launch_refusal_does_not_send_sleep(self):
+        (self.root / 'launch-refused').touch()
+        result = self.request()
+        self.assertFalse(result['ok'])
+        self.assertIn('launch refused', result['message'])
+        self.assertEqual(self.adb_calls(['input', 'keyevent', 'KEYCODE_SLEEP']), [])
+        self.assertEqual(self.adb_calls(['dumpsys', 'window']), [])
+
+    def test_supervisor_cancellation_cleans_scrcpy_before_sleep(self):
+        import signal
+        self.executable('scrcpy', '''import os, time
+from pathlib import Path
+root = Path(os.environ['PHONE_TEST_ROOT'])
+(root / 'mirror-pid-ABC').write_text(str(os.getpid()))
+(root / 'supervisor-pid').write_text(str(os.getppid()))
+time.sleep(30)''')
+        self.executable('notify-send', 'pass')
+        self.assertTrue(self.request()['ok'])
+        os.kill(int((self.root / 'supervisor-pid').read_text()), signal.SIGTERM)
+        self.wait_closed()
+        self.assertEqual(len(self.adb_calls(['input', 'keyevent', 'KEYCODE_SLEEP'])), 1)
+        self.assertFalse((self.root / 'sleep-while-mirroring').exists())
+
+    def test_lock_opt_out_sends_no_sleep_or_verification(self):
+        self.executable('scrcpy', 'pass')
+        self.assertTrue(self.request(lockOnClose=False)['ok'])
+        self.assertEqual(self.adb_calls(['input', 'keyevent', 'KEYCODE_SLEEP']), [])
+        self.assertEqual(self.adb_calls(['dumpsys', 'window']), [])
+
+    def test_late_unconfirmed_lock_notifies_without_claiming_unlocked(self):
+        (self.root / 'unconfirmed').touch()
+        self.executable('scrcpy', 'import time\ntime.sleep(1.2)')
+        self.executable('notify-send', 'import os, sys\nfrom pathlib import Path\n(Path(os.environ["PHONE_TEST_ROOT"]) / "notification").write_text("\\n".join(sys.argv[1:]))')
+        self.assertTrue(self.request()['ok'])
+        self.wait_closed()
+        deadline = time.monotonic() + 5
+        while not (self.root / 'notification').exists() and time.monotonic() < deadline:
+            time.sleep(.05)
+        message = (self.root / 'notification').read_text()
+        self.assertIn('Could not confirm the phone locked', message)
+        self.assertNotIn('unlocked', message)
+        self.assertEqual(len(self.adb_calls(['dumpsys', 'window'])), 3)
+
+    def test_early_unconfirmed_lock_reaches_panel_with_original_error(self):
+        (self.root / 'unconfirmed').touch()
+        self.executable('scrcpy', 'import sys\nprint("Test encoder failed", file=sys.stderr)\nsys.exit(1)')
+        result = self.request()
+        self.assertFalse(result['ok'])
+        self.assertIn('Could not confirm the phone locked', result['message'])
+        self.assertIn('Test encoder failed', result['message'])
+
     def test_stop_ends_only_the_selected_session(self):
         self.executable('scrcpy', 'import time\ntime.sleep(30)')
         self.assertTrue(self.request()['ok'])
@@ -114,9 +306,11 @@ time.sleep(2.5)
                                     text=True, capture_output=True, env=self.env, timeout=6)
             self.assertTrue(json.loads(result.stdout)['ok'], result.stdout)
         stop('ABC')
+        self.assertEqual([args[1] for args in self.adb_calls(['input', 'keyevent', 'KEYCODE_SLEEP'])], ['ABC'])
         # The unrelated device must still be active and reject a duplicate.
         self.assertIn('already mirroring', self.request(serial='DEF')['message'])
         stop('DEF')
+        self.assertEqual([args[1] for args in self.adb_calls(['input', 'keyevent', 'KEYCODE_SLEEP'])], ['ABC', 'DEF'])
 
 
 if __name__ == "__main__":

@@ -207,6 +207,7 @@ Panel {
             quality: setting("quality", "Balanced"),
             audio: setting("audio", true),
             screenOff: setting("screenOff", false),
+            lockOnClose: setting("lockOnClose", true),
             keepAwake: setting("keepAwake", true)
         });
     }
@@ -296,7 +297,7 @@ Panel {
         }
         function status(): string {
             return JSON.stringify({
-                version: "0.3.9",
+                version: "0.3.10",
                 name: "OmaDroid",
                 theme: {
                     background: root.colors.background.toString(),
@@ -1153,6 +1154,16 @@ Panel {
                             }
                             SettingToggle {
                                 width: parent.width
+                                title: "Lock phone when mirror closes"
+                                detail: "Request sleep and check the lock screen after closing the mirror. Closing this panel does not stop or lock the phone."
+                                checked: root.setting("lockOnClose", true)
+                                onToggled: root.save("lockOnClose", checked)
+                            }
+                            Divider {
+                                width: parent.width
+                            }
+                            SettingToggle {
+                                width: parent.width
                                 title: "Keep the phone awake"
                                 detail: "Prevent idle sleep during mirroring, including over Wi-Fi. Normal sleep resumes when the mirror closes."
                                 checked: root.setting("keepAwake", true)
@@ -1268,7 +1279,7 @@ Panel {
                             width: parent.width
                             Label {
                                 width: parent.width
-                                text: "About OmaDroid · 0.3.9"
+                                text: "About OmaDroid · 0.3.10"
                                 font.bold: true
                             }
                             Label {

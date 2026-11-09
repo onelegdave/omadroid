@@ -1,5 +1,12 @@
 # OmaDroid screenshots
 
+## Mirror-close setting — 0.3.10
+
+Native dark and light Settings panels captured on Omarchy 4.5.0-3 using the actual release QML in an isolated Quickshell instance. The backend returns synthetic dependency status and no devices. Palettes were changed only inside that isolated instance; the desktop theme and installed settings were untouched. No phone identifiers, addresses, accounts or pairing codes appear.
+
+<img src="screenshots/settings-v0.3.10-dark.png" width="400" alt="Native dark OmaDroid Settings panel with lock-on-close enabled">
+<img src="screenshots/settings-v0.3.10-light.png" width="400" alt="Native light OmaDroid Settings panel with lock-on-close enabled">
+
 ## Marketplace cover and native demos — 0.3.8, 19 October 2026
 
 The root `preview.png` is a promotional one-sheet in the same visual family as OmaChat and System QuikView. OpenAI's built-in image generation produced the composition from the actual 0.3.8 panel with invented status. The separate Android mirror screen is a fictional illustration, not a physical-phone capture. This artwork is not a pixel-exact screenshot or a hardware-compatibility claim. [Generation prompt](artwork/marketplace-cover-prompt.txt).
