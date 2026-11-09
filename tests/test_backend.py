@@ -228,7 +228,7 @@ legacy _adb._tcp. 192.168.1.3:5555
     def test_lock_on_close_defaults_and_screen_off_cleanup(self):
         for options, power_off in (({}, True), ({'lockOnClose': True}, True),
                                    ({'lockOnClose': False}, False),
-                                   ({'lockOnClose': False, 'screenOff': True}, True)):
+                                   ({'lockOnClose': False, 'screenOff': True}, False)):
             with self.subTest(options=options):
                 self.assertEqual('--power-off-on-close' in phone.scrcpy_command('ABC', options), power_off)
         manifest = json.loads(Path(phone.__file__).with_name('manifest.json').read_text())

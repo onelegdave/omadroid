@@ -10,7 +10,7 @@ No root, paid service, Samsung account, or additional Android mirroring app is r
 
 The cover is promotional artwork using fictional device information and screen content. [Native demo captures and artwork details](docs/screenshots.md) are available separately.
 
-[More screenshots](docs/screenshots.md) · [Release v0.3.9](https://github.com/onelegdave/omadroid/releases/tag/v0.3.9) · [Security and privacy](SECURITY.md)
+[More screenshots](docs/screenshots.md) · [Release v0.3.10](https://github.com/onelegdave/omadroid/releases/tag/v0.3.10) · [Security and privacy](SECURITY.md)
 
 ## Install
 
@@ -22,7 +22,7 @@ omarchy plugin add https://github.com/onelegdave/omadroid --enable
 
 Open the phone icon in the bar and follow **Connect → Desktop → Phone → Pair → Ready**. OmaDroid offers explicit Install buttons for missing desktop tools. Android debugging authorization is required; KDE Connect alone cannot mirror the phone.
 
-The command installs the current upstream branch. For the numbered release, download and extract `omadroid-v0.3.9.tar.gz` from [Releases](https://github.com/onelegdave/omadroid/releases/tag/v0.3.9), review its source, and use the local installer below. Checksums are included with the release.
+The command installs the current upstream branch. For the numbered release, download and extract `omadroid-v0.3.10.tar.gz` from [Releases](https://github.com/onelegdave/omadroid/releases/tag/v0.3.10), review its source, and use the local installer below. Checksums are included with the release.
 
 ## Requirements
 
@@ -97,7 +97,8 @@ Pair using KDE Connect on the computer and phone. This is separate from mirrorin
 - **Disconnect** closes that phone’s Wi-Fi mirrors and connections, including IPv4 and IPv6, and pauses automatic reconnection until you manually choose **Connect** again. USB stays available until you unplug its cable.
 - Disconnect does not erase pairing. To forget this computer, remove it in the phone’s Wireless debugging settings.
 - Multiple phones can be mirrored. Connections reporting the same Android hardware identity share one phone card; the active mirror is preferred, then a ready USB connection. Matching model names or nicknames alone never merges devices. If Android refuses identity queries and discovery cannot identify it, an unresolved connection stays separate. Confirmed connection identities are remembered so offline phone cards also stay grouped. Stop and Disconnect recheck connected device identities before acting.
-- **Lock phone when mirror closes** (on by default) locks the phone and confirms it when the mirror closes. Closing the panel doesn't trigger it.
+- **Lock phone when mirror closes** (on by default) requests sleep after the mirror closes and checks that Android shows its lock screen. OmaDroid reports when it cannot confirm this; phone lock-delay and trust settings still apply. Closing the panel does not trigger it. Turning this option off also omits scrcpy's power-off-on-close flag, including when screen-off mirroring is enabled.
+- One mirror per physical phone is allowed, even when it has both USB and Wi-Fi connections. Close the existing mirror before switching connections. Different identified phones can mirror together. If a phone refuses identity queries, it can mirror only while no other mirror is running. Close existing mirrors before upgrading from an older version.
 - **Settings** sets quality (Balanced, Sharp, Low bandwidth), audio forwarding, physical display power, and lock-on-close behavior. Changes apply to the next session.
 - **Keep phone awake while mirroring** is enabled by default. It prevents idle sleep for the duration of the mirror session, including Wi-Fi sessions on battery with the physical screen off. It uses scrcpy's `--keep-active`; it does not change the phone's saved screen timeout or remove its lock credentials. Normal idle behavior resumes after the mirror closes. Turn the option off if you want ordinary idle sleep during a session.
 - If the phone is already asleep or locked, use **Wake / unlock** beside it in the panel. This sends Android's wake command and asks Android to show its normal unlock prompt. Enter the PIN or use your normal unlock method when required. It does not submit credentials or bypass a secure lock. Older Android versions that lack the unlock-prompt command can still be woken, then unlocked normally.
@@ -149,6 +150,8 @@ Upstream documentation: [scrcpy](https://github.com/Genymobile/scrcpy), [Android
 Thanks to [@HermeticOrmus](https://github.com/HermeticOrmus) for fixing ADB readiness detection in [#1](https://github.com/onelegdave/omadroid/pull/1).
 
 Thanks to [@HamxAnwar](https://github.com/HamxAnwar) for diagnosing and fixing the ADB server start race at login in [#4](https://github.com/onelegdave/omadroid/issues/4) and [#5](https://github.com/onelegdave/omadroid/pull/5).
+
+Thanks to [@anabelle](https://github.com/anabelle) for contributing lock-on-close behavior in [#6](https://github.com/onelegdave/omadroid/pull/6).
 
 ## AI assistance
 

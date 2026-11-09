@@ -517,7 +517,7 @@ def scrcpy_command(serial, options):
         args.append("--no-audio")
     if options.get("screenOff") is True:
         args.append("--turn-screen-off")
-    if options.get("screenOff") is True or options.get("lockOnClose") is not False:
+    if options.get("lockOnClose") is not False:
         args.append("--power-off-on-close")
     if options.get("keepAwake") is True:
         args.append("--keep-active")
@@ -543,6 +543,30 @@ def lock_phone(serial):
             pass
     raise UserError('Could not confirm the phone locked. Check the phone directly; '
                     'its connection or lock-screen settings may prevent confirmation.')
+
+
+@contextmanager
+def reserve_phone(serial):
+    """One mirror per physical phone, held until post-exit locking finishes.
+
+    Unidentified phones reserve all mirroring exclusively: they could be an
+    alias of any known phone. Identified, distinct phones can mirror together.
+    """
+    device = {'serial': serial, 'state': 'device', 'name': '',
+              'wireless': ':' in serial or '._adb-tls-connect.' in serial}
+    identity = identify_devices([device], [])[0].get('hardwareId')
+    with storage('cache') as directory, ExitStack() as stack:
+        gate = stack.enter_context(files.private_file(directory, 'mirror-identity.lock'))
+        try:
+            fcntl.flock(gate, (fcntl.LOCK_SH if identity else fcntl.LOCK_EX) | fcntl.LOCK_NB)
+            if identity:
+                phone_lock = stack.enter_context(files.private_file(
+                    directory, 'phone-' + session_key(identity) + '.lock'))
+                fcntl.flock(phone_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise UserError('This phone is already mirroring, or another mirror could not be identified. '
+                            'Close the existing mirror before starting another.') from None
+        yield
 
 
 def process_identity(pid):
@@ -620,7 +644,7 @@ def session(request):
     def cancelled(signum, frame):
         raise UserError('Mirror session cancelled.')
     signal.signal(signal.SIGTERM, cancelled)
-    with storage('cache') as directory, files.private_file(directory, key + '.lock') as lock:
+    with storage('cache') as directory, files.private_file(directory, key + '.lock') as lock, ExitStack() as reservation:
         try:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
@@ -629,6 +653,7 @@ def session(request):
         launched = False
         failure = ''
         try:
+            reservation.enter_context(reserve_phone(serial))
             with files.private_file(directory, key + '.log', truncate=True) as log:
                 with commands.launch('scrcpy', scrcpy_command(serial, request)[1:]) as child:
                     launched = True

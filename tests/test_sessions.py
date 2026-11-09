@@ -59,7 +59,10 @@ elif args[3:] == ["input", "keyevent", "KEYCODE_SLEEP"]:
         except ProcessLookupError:
             pass
 elif args[3:] == ["dumpsys", "window"]:
-    print("isKeyguardShowing=" + ("false" if (root / "unconfirmed").exists() else "true"))''')
+    print("isKeyguardShowing=" + ("false" if (root / "unconfirmed").exists() else "true"))
+elif args[3:] and 'getprop ro.serialno' in args[3]:
+    identity = '' if (root / ('unknown-' + args[1])).exists() else ('SAME1234' if (root / 'same-phone').exists() else args[1] + '1234')
+    print('serial=' + identity + '\\nboot=\\nname=Test Phone')''')
 
     def tearDown(self):
         self.temp.cleanup()
@@ -134,6 +137,100 @@ time.sleep(2.5)
         while metadata.exists() and time.monotonic() < deadline:
             time.sleep(.05)
         self.assertFalse(metadata.exists(), 'Session did not finish cleanup')
+
+    def stop(self, serial):
+        result = subprocess.run([sys.executable, str(self.driver), 'action'],
+                                input=json.dumps({'action': 'stop', 'serial': serial}) + '\n',
+                                text=True, capture_output=True, env=self.env, timeout=25)
+        self.assertTrue(json.loads(result.stdout)['ok'], result.stdout)
+
+    def test_alias_mirror_is_refused_without_sleeping_the_active_phone(self):
+        (self.root / 'same-phone').touch()
+        self.executable('scrcpy', 'import time\ntime.sleep(30)')
+        self.assertTrue(self.request()['ok'])
+        try:
+            duplicate = self.request(serial='DEF')
+            self.assertFalse(duplicate['ok'])
+            self.assertIn('already mirroring', duplicate['message'])
+            self.assertEqual(self.adb_calls(['input', 'keyevent', 'KEYCODE_SLEEP']), [])
+            self.assertIn('already mirroring', self.request()['message'])
+        finally:
+            self.stop('ABC')
+        self.assertEqual(len(self.adb_calls(['input', 'keyevent', 'KEYCODE_SLEEP'])), 1)
+        self.assertTrue(self.request(serial='DEF')['ok'])
+        self.stop('DEF')
+
+    def test_unidentified_session_excludes_known_and_unknown_aliases(self):
+        (self.root / 'unknown-ABC').touch()
+        self.executable('scrcpy', 'import time\ntime.sleep(30)')
+        self.assertTrue(self.request()['ok'])
+        try:
+            self.assertFalse(self.request(serial='DEF')['ok'])
+            (self.root / 'unknown-DEF').touch()
+            self.assertFalse(self.request(serial='DEF')['ok'])
+            self.assertEqual(self.adb_calls(['input', 'keyevent', 'KEYCODE_SLEEP']), [])
+        finally:
+            self.stop('ABC')
+
+    def test_known_session_excludes_an_unidentified_alias(self):
+        (self.root / 'unknown-DEF').touch()
+        self.executable('scrcpy', 'import time\ntime.sleep(30)')
+        self.assertTrue(self.request()['ok'])
+        try:
+            self.assertFalse(self.request(serial='DEF')['ok'])
+            self.assertEqual(self.adb_calls(['input', 'keyevent', 'KEYCODE_SLEEP']), [])
+        finally:
+            self.stop('ABC')
+
+    def test_phone_reservation_is_held_through_lock_confirmation(self):
+        (self.root / 'same-phone').touch()
+        (self.root / 'unconfirmed').touch()
+        self.executable('scrcpy', 'import time\ntime.sleep(1.2)')
+        self.executable('notify-send', 'pass')
+        self.assertTrue(self.request()['ok'])
+        deadline = time.monotonic() + 3
+        while not self.adb_calls(['input', 'keyevent', 'KEYCODE_SLEEP']) and time.monotonic() < deadline:
+            time.sleep(.02)
+        self.assertTrue(self.adb_calls(['input', 'keyevent', 'KEYCODE_SLEEP']))
+        duplicate = self.request(serial='DEF')
+        self.assertFalse(duplicate['ok'])
+        self.wait_closed()
+
+    def test_simultaneous_alias_start_launches_only_one_mirror(self):
+        (self.root / 'same-phone').touch()
+        self.executable('scrcpy', 'import time\ntime.sleep(30)')
+        children = []
+        for serial in ('ABC', 'DEF'):
+            child = subprocess.Popen([sys.executable, str(self.driver), 'action'],
+                                     stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE, text=True, env=self.env)
+            child.stdin.write(json.dumps({'action': 'mirror', 'serial': serial}) + '\n')
+            child.stdin.close()
+            children.append((serial, child))
+        results = []
+        try:
+            for serial, child in children:
+                child.wait(timeout=8)
+                results.append((serial, json.loads(child.stdout.read())))
+            winners = [serial for serial, result in results if result['ok']]
+            self.assertEqual(len(winners), 1, results)
+            self.assertEqual(self.adb_calls(['input', 'keyevent', 'KEYCODE_SLEEP']), [])
+        finally:
+            for serial, result in results:
+                if result['ok']:
+                    self.stop(serial)
+            for _, child in children:
+                child.stdout.close()
+                child.stderr.close()
+
+    def test_launch_failure_releases_physical_phone_reservation(self):
+        (self.root / 'same-phone').touch()
+        (self.root / 'launch-refused').touch()
+        self.executable('scrcpy', 'import time\ntime.sleep(30)')
+        self.assertFalse(self.request()['ok'])
+        (self.root / 'launch-refused').unlink()
+        self.assertTrue(self.request(serial='DEF')['ok'])
+        self.stop('DEF')
 
     def test_normal_window_close_sleeps_only_after_scrcpy_exits(self):
         self.executable('scrcpy', '''import os, sys, time

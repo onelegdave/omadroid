@@ -1,4 +1,13 @@
-# Validation — 0.3.9
+# Validation — 0.3.10
+
+## 0.3.10 mirror-close locking — 2026-11-09
+
+- Reviewed contributor PR #6 at `bdba60619c9550011d5ee8dc9ec566c3cdcf6d5d` and added physical-phone session reservations to prevent a second mirror through another transport. Reservations remain held through sleep/lock confirmation. Unidentified phones reserve mirroring exclusively; distinct identified phones can run together.
+- All 140 Python tests pass in isolated HOME/XDG directories and a private session bus on Omarchy 4.5.0-3, Python 3.14, scrcpy 5.0.1 and android-tools 37.0.0p1. QML lint and Omarchy manifest validation pass.
+- Fake-process regressions cover simultaneous aliases, rejected aliases sending no sleep, shared-phone reservation release after launch refusal, retention through lock confirmation, unknown/known identity exclusion in both directions, independent phones, normal close, Stop, supervisor cancellation, and lock opt-out.
+- A connected Motorola razr fold 2026 running Android 16 was tested over Wi-Fi with scrcpy 5.0.1, screen-off and keep-active enabled. Starting from an unlocked phone (`isKeyguardShowing=false`), a live mirror started and Stop completed with `isKeyguardShowing=true`. A separate mapped mirror window was closed through the compositor; its supervisor exited and keyguard remained confirmed. No phone screenshots, identifiers or pairing codes were published.
+- Native Settings panels were captured and visually inspected in dark and light palettes in a separate Quickshell instance with synthetic status and no devices. No runtime QML TypeError/QColor warnings appeared. The existing cover remains promotional artwork; new Settings captures are in docs/screenshots.md.
+- USB/Wi-Fi alias concurrency is fixture-tested; two physical transports were not connected for this check. Other handset/Android combinations, audio, fold/unfold transitions and lock-delay/trust settings were not exhaustively tested. The initial command-line launch lacked the session display; the completed live checks used the active Wayland display. No new marketplace snapshot is claimed approved.
 
 ## 0.3.9 ADB server start race — 2026-11-01
 

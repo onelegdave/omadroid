@@ -1,10 +1,10 @@
 # OmaDroid security and network behavior
 
-Review target: OmaDroid 0.3.9, 2026-11-01. This release starts the local ADB server once before panel status queries it, as described below. The 0.3.8 packaged-terminal installer route and Qt 6.12 color correction, the 0.3.7 ADB destination and mDNS-server checks, the 0.3.6 startup and manual installation guidance, executable verification, launcher symlink rejection, permissions, and the phone endpoint allowlist are unchanged.
+Review target: OmaDroid 0.3.10, 2026-11-09. This release adds mirror-close sleep requests and lock-screen confirmation, plus physical-phone session reservations. The 0.3.9 ADB server-start correction, executable verification, launcher protections, endpoint restrictions, and installer capabilities remain unchanged.
 
 ## Mirror-close locking
 
-With `lockOnClose` (default on), scrcpy gets `--power-off-on-close`. After scrcpy exits, OmaDroid sends `KEYCODE_SLEEP` (idempotent, never wakes the phone) and checks `dumpsys window` for `isKeyguardShowing=true`: three attempts, two-second deadline per call, same verified ADB runner. If unconfirmed it reports "Could not confirm the phone locked". No new executable, permission or network destination.
+With `lockOnClose` (default on), scrcpy gets `--power-off-on-close`. After scrcpy exits, OmaDroid sends `KEYCODE_SLEEP` (idempotent, never wakes the phone) and checks `dumpsys window` for `isKeyguardShowing=true`: three attempts, two-second deadline per call, same verified ADB runner. If unconfirmed it reports "Could not confirm the phone locked". The identity query already used for phone grouping also runs before mirror launch. A shared/exclusive `mirror-identity.lock` gate and hashed `phone-<hash>.lock` files under the private cache reserve each physical phone through the end of lock confirmation. Known different phones share the gate; a phone without a confirmed identity takes it exclusively. Duplicate aliases fail before scrcpy launches and never send sleep. Close pre-upgrade mirror sessions before installing this version; their supervisors predate these reservations. Disabling lock-on-close omits both sleep/confirmation and scrcpy's power-off-on-close flag. No new executable, permission or network destination. Lock-screen visibility is not a guarantee that Android requires fresh credentials: vendor lock-delay and trust settings remain authoritative.
 
 ## 0.3.9: single ADB server start
 

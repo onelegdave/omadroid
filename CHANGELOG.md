@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.10 — 2026-11-09
+
+- Add default-on **Lock phone when mirror closes**: request sleep after scrcpy exits, check Android lock-screen visibility with bounded retries, and report when confirmation fails. Thanks to [@anabelle](https://github.com/anabelle) for [#6](https://github.com/onelegdave/omadroid/pull/6).
+- Prevent simultaneous USB/Wi-Fi mirrors of the same physical phone. Hold the phone reservation through post-exit cleanup; distinct identified phones still work together. Unidentified phones mirror alone.
+- Honor lock-on-close opt-out for both sleep commands and scrcpy's power-off-on-close flag. Closing the panel does not close or lock the phone.
+- Preserve pairing, saved connections, quality settings, executable verification, and network restrictions. Close any running mirrors before upgrading from earlier versions.
+
 ## 0.3.9 — 2026-11-01
 
 - Stop ADB from crashing at login. Panel status ran `adb devices -l` and ADB discovery at the same time; with no ADB server running yet, both started one, and the server that lost the port aborted with a core dump and a crash notification ([#4](https://github.com/onelegdave/omadroid/issues/4)). Status now runs `adb start-server` once after the readiness probe, so the concurrent calls share one server. Thanks to [@HamxAnwar](https://github.com/HamxAnwar) for the diagnosis and fix in [#5](https://github.com/onelegdave/omadroid/pull/5).
